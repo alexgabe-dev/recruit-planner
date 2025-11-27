@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Orb from "@/components/Orb"
+import { useSearchParams } from "next/navigation"
 
 export default function LoginPage() {
   const router = useRouter()
+  const params = useSearchParams()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const approved = params.get('approved') === '1'
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,8 +44,9 @@ export default function LoginPage() {
       <div style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}>
         <Orb hoverIntensity={0.5} rotateOnHover={true} hue={0} forceHoverState={false} />
       </div>
-      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 rounded-lg border border-border p-6 bg-card">
+      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 rounded-lg border border-border p-6 bg-card/80 backdrop-blur">
         <h1 className="text-xl font-semibold">Bejelentkezés</h1>
+        {approved && <p className="text-xs text-[oklch(0.7_0.18_145)]">Fiók jóváhagyva. Jelentkezz be.</p>}
         <div className="space-y-2">
           <label className="text-sm">Felhasználónév</label>
           <Input value={username} onChange={(e) => setUsername(e.target.value)} required />
@@ -55,6 +59,10 @@ export default function LoginPage() {
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Belépés..." : "Belépés"}
         </Button>
+        <div className="flex items-center justify-between text-xs">
+          <button type="button" className="text-muted-foreground hover:underline" onClick={() => router.push('/forgot-password')}>Elfelejtetted a jelszót?</button>
+          <button type="button" className="text-muted-foreground hover:underline" onClick={() => router.push('/register')}>Regisztráció</button>
+        </div>
       </form>
     </div>
   )

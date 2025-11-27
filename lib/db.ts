@@ -74,10 +74,24 @@ export function initializeDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL UNIQUE,
       hashed_password TEXT NOT NULL,
+      email TEXT,
+      status TEXT DEFAULT 'pending',
+      approval_token TEXT,
+      reset_token TEXT,
+      reset_expires DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `)
+
+  // Ensure new columns exist on older databases
+  const columns = database.prepare("PRAGMA table_info(users)").all() as { name: string }[]
+  const have = new Set(columns.map((c) => c.name))
+  if (!have.has('email')) database.exec("ALTER TABLE users ADD COLUMN email TEXT")
+  if (!have.has('status')) database.exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'pending'")
+  if (!have.has('approval_token')) database.exec("ALTER TABLE users ADD COLUMN approval_token TEXT")
+  if (!have.has('reset_token')) database.exec("ALTER TABLE users ADD COLUMN reset_token TEXT")
+  if (!have.has('reset_expires')) database.exec("ALTER TABLE users ADD COLUMN reset_expires DATETIME")
 }
 
 // Partner operations
@@ -291,22 +305,75 @@ export interface User {
   id: number
   username: string
   hashed_password: string
+  email?: string | null
+  status?: string | null
+  approval_token?: string | null
+  reset_token?: string | null
+  reset_expires?: Date | null
 }
 
 export function getUserByUsername(username: string): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password FROM users WHERE username = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, status FROM users WHERE username = ?')
   const row = stmt.get(username) as User | undefined
+  return row ?? null
+}
+
+export function getUserByEmail(email: string): User | null {
+  const database = getDatabase()
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, status FROM users WHERE email = ?')
+  const row = stmt.get(email) as User | undefined
   return row ?? null
 }
 
 export function createUser(username: string, hashedPassword: string): User {
   const database = getDatabase()
-  const stmt = database.prepare('INSERT INTO users (username, hashed_password) VALUES (?, ?)')
-  const result = stmt.run(username, hashedPassword)
+  const stmt = database.prepare('INSERT INTO users (username, hashed_password, status) VALUES (?, ?, ?)')
+  const result = stmt.run(username, hashedPassword, 'pending')
   return {
     id: result.lastInsertRowid as number,
     username,
     hashed_password: hashedPassword,
+    email: null as any,
+    status: 'pending',
   }
+}
+
+export function createPendingUser({ username, email, hashedPassword, approvalToken }: { username: string; email: string; hashedPassword: string; approvalToken: string }): User {
+  const database = getDatabase()
+  const stmt = database.prepare('INSERT INTO users (username, email, hashed_password, status, approval_token) VALUES (?, ?, ?, ?, ?)')
+  const result = stmt.run(username, email, hashedPassword, 'pending', approvalToken)
+  return {
+    id: result.lastInsertRowid as number,
+    username,
+    hashed_password: hashedPassword,
+    email,
+    status: 'pending',
+    approval_token: approvalToken,
+  }
+}
+
+export function approveUserByToken(token: string): User | null {
+  const database = getDatabase()
+  const user = database.prepare('SELECT id, username, email, status FROM users WHERE approval_token = ?').get(token) as User | undefined
+  if (!user) return null
+  database.prepare("UPDATE users SET status = 'active', approval_token = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(user.id)
+  const updated = database.prepare('SELECT id, username, email, status FROM users WHERE id = ?').get(user.id) as User
+  return updated
+}
+
+export function setResetTokenForUser(userId: number, token: string, expires: Date): void {
+  const database = getDatabase()
+  database.prepare('UPDATE users SET reset_token = ?, reset_expires = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(token, expires.toISOString(), userId)
+}
+
+export function getUserByResetToken(token: string): User | null {
+  const database = getDatabase()
+  const row = database.prepare('SELECT id, username, email, reset_token, reset_expires FROM users WHERE reset_token = ?').get(token) as any
+  return row ?? null
+}
+
+export function clearResetToken(userId: number): void {
+  const database = getDatabase()
+  database.prepare('UPDATE users SET reset_token = NULL, reset_expires = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(userId)
 }

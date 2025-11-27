@@ -19,6 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Hibás felhasználónév vagy jelszó" }, { status: 401 })
     }
 
+    if (user.status && user.status !== 'active') {
+      return NextResponse.json({ error: "A fiók még nincs aktiválva" }, { status: 403 })
+    }
+
     const ok = await bcrypt.compare(password, user.hashed_password)
     if (!ok) {
       return NextResponse.json({ error: "Hibás felhasználónév vagy jelszó" }, { status: 401 })
