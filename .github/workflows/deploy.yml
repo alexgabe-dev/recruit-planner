@@ -17,8 +17,8 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: pry.hu
-          username: recruit        # replace with your VPS username
-          key: ${{ secrets.SSH_KEY }}
+          username: recruit
+          key: ${{ secrets.recruit }}
           script: |
             cd /opt/recruit-planner/app
             git fetch origin main
