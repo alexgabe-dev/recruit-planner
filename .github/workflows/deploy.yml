@@ -1,4 +1,4 @@
-name: Deploy to pry.hu
+name: Deploy to VPS
 
 on:
   push:
@@ -16,13 +16,16 @@ jobs:
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: pry.hu
-          username: recruit
-          key: ${{ secrets.recruit }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script_stop: true
           script: |
+            set -e
             cd /opt/recruit-planner/app
             git fetch origin main
             git reset --hard origin/main
-            npm install --omit=dev
-            npm run build
-            pm2 restart recruit-planner
+            npm ci
+            NODE_ENV=production DATABASE_PATH=/var/lib/recruit-planner/database.sqlite AUTH_SECRET='${{ secrets.AUTH_SECRET }}' npm run build
+            PORT=3001 NODE_ENV=production DATABASE_PATH=/var/lib/recruit-planner/database.sqlite AUTH_SECRET='${{ secrets.AUTH_SECRET }}' pm2 start "npm run start" --name recruit-planner --update-env || pm2 restart recruit-planner --update-env
