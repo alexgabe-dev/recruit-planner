@@ -27,8 +27,13 @@ export async function sendMail({ to, subject, html }: MailOptions) {
     console.log('[MAIL:FALLBACK] HTML:', html)
     return { success: true, fallback: true }
   }
-  await transporter.sendMail({ from, to, subject, html })
-  return { success: true }
+  try {
+    await transporter.sendMail({ from, to, subject, html })
+    return { success: true }
+  } catch (err) {
+    console.error('[MAIL:ERROR]', (err as any)?.message || err)
+    return { success: false, error: 'mail_failed' }
+  }
 }
 
 export function approvalEmail({ username, email, approveUrl }: { username: string; email: string; approveUrl: string }) {
