@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server"
+import { getUserByUsername } from "@/lib/db"
+import bcrypt from "bcryptjs"
+import { SignJWT } from "jose"
+
+const COOKIE_NAME = "session"
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const { username, password } = body as { username?: string; password?: string }
+
+    if (!username || !password) {
+      return NextResponse.json({ error: "Hiányzó adatok" }, { status: 400 })
+    }
+
+    const user = getUserByUsername(username)
+    if (!user) {
+      return NextResponse.json({ error: "Hibás felhasználónév vagy jelszó" }, { status: 401 })
+    }
+
+    const ok = await bcrypt.compare(password, user.hashed_password)
+    if (!ok) {
+      return NextResponse.json({ error: "Hibás felhasználónév vagy jelszó" }, { status: 401 })
+    }
+
+    const secret = process.env.AUTH_SECRET
+    if (!secret) {
+      // Fallback only for development; ensure AUTH_SECRET is set in production
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json({ error: "Szerver hiba" }, { status: 500 })
+      }
+    }
+
+    const key = new TextEncoder().encode(secret || "dev-secret")
+    const token = await new SignJWT({ sub: user.id, username: user.username })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("7d")
+      .sign(key)
+
+    const res = NextResponse.json({ success: true })
+    res.cookies.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    })
+    return res
+  } catch (err) {
+    return NextResponse.json({ error: "Szerver hiba" }, { status: 500 })
+  }
+}
