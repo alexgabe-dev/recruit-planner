@@ -23,10 +23,24 @@ interface DeleteAdDialogProps {
 export function DeleteAdDialog({ open, onOpenChange, ad }: DeleteAdDialogProps) {
   const { deleteAd } = useStore()
 
-  const handleDelete = () => {
-    deleteAd(ad.id)
-    toast.success("Hirdetés sikeresen törölve!")
-    onOpenChange(false)
+  const handleDelete = async () => {
+    try {
+      let id = Number(ad.id)
+      console.log('DeleteAdDialog: Attempting to delete ad', { id, ad })
+      
+      if (!Number.isFinite(id)) {
+        toast.error("Hiba: érvénytelen hirdetés azonosító")
+        return
+      }
+      
+      await deleteAd(id)
+      await useStore.getState().loadData()
+      toast.success("Hirdetés sikeresen törölve!")
+      onOpenChange(false)
+    } catch (e) {
+      console.error('DeleteAdDialog error:', e)
+      toast.error("Hiba: nem sikerült törölni a hirdetést")
+    }
   }
 
   return (

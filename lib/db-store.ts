@@ -29,7 +29,7 @@ export const useStore = create<Store>()((set) => ({
   loadData: async () => {
     try {
       set({ isLoading: true, error: null })
-      const res = await fetch("/api/data")
+      const res = await fetch("/api/data", { cache: "no-store" })
       if (!res.ok) throw new Error("Failed to fetch data")
       const data = await res.json()
       set({ partners: data.partners, ads: data.ads, isLoading: false })
@@ -122,10 +122,19 @@ export const useStore = create<Store>()((set) => ({
 
   deleteAd: async (id) => {
     try {
-      const res = await fetch(`/api/ads/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete ad")
-      set((state) => ({ ads: state.ads.filter((a) => a.id !== id) }))
+      const targetId = Number(id)
+      const res = await fetch(`/api/ads/${targetId}`, { method: "DELETE" })
+      
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "Unknown error")
+        throw new Error(`Failed to delete ad: ${res.status} ${errorText}`)
+      }
+      
+      set((state) => ({
+        ads: state.ads.filter((a) => Number(a.id) !== Number(targetId)),
+      }))
     } catch (error) {
+      console.error("Store deleteAd error:", error)
       set({ error: (error as Error).message })
       throw error
     }

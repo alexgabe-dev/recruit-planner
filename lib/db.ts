@@ -3,17 +3,28 @@ import path from 'path'
 import { Partner, Ad } from './types'
 
 let db: Database.Database | null = null
+const globalForDb = globalThis as unknown as { __recruit_db?: Database.Database }
 
 export function getDatabase(): Database.Database {
   if (!db) {
-    const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite')
-    db = new Database(dbPath)
-    
-    // Enable foreign keys
-    db.pragma('foreign_keys = ON')
-    
-    // Create tables if they don't exist
-    initializeDatabase()
+    // Singleton across HMR/route reloads
+    if (!globalForDb.__recruit_db) {
+      const defaultPath = path.join(process.cwd(), 'database.sqlite')
+      const dbPath = process.env.DATABASE_PATH || defaultPath
+      console.log('----------------------------------------')
+      console.log('[DB] Initializing database connection')
+      console.log('[DB] Target Path:', dbPath)
+      console.log('[DB] Resolved Path:', path.resolve(dbPath))
+      console.log('[DB] CWD:', process.cwd())
+      console.log('----------------------------------------')
+      globalForDb.__recruit_db = new Database(dbPath)
+      // Enable foreign keys
+      globalForDb.__recruit_db.pragma('foreign_keys = ON')
+      // Create tables if they don't exist
+      db = globalForDb.__recruit_db
+      initializeDatabase()
+    }
+    db = globalForDb.__recruit_db!
   }
   
   return db
@@ -227,8 +238,15 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>):
 
 export function deleteAd(id: number): boolean {
   const database = getDatabase()
+  console.log('[DB] Attempting to delete ad:', id)
+  
+  // Debug: Check what ads exist before deleting
+  const allAds = database.prepare('SELECT id, position_name FROM ads').all()
+  console.log('[DB] Current ads in DB:', JSON.stringify(allAds))
+  
   const stmt = database.prepare('DELETE FROM ads WHERE id = ?')
   const result = stmt.run(id)
+  console.log('[DB] Delete result:', result)
   return result.changes > 0
 }
 
