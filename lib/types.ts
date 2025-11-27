@@ -19,15 +19,15 @@ export interface Ad {
   partner?: Partner
 }
 
-export type AdStatus = "Tervezett" | "Aktív" | "Lezárt"
+export type AdStatus = "Időzített" | "Aktív" | "Lejárt"
 
 export function getAdStatus(ad: Ad): AdStatus {
   const now = new Date()
   const start = new Date(ad.startDate)
   const end = new Date(ad.endDate)
 
-  if (now < start) return "Tervezett"
-  if (now > end) return "Lezárt"
+  if (now < start) return "Időzített"
+  if (now > end) return "Lejárt"
   return "Aktív"
 }
 
