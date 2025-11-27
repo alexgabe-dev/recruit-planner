@@ -7,18 +7,18 @@ import { Bell, Play, Clock } from "lucide-react"
 export function NotificationsList() {
   const { ads, partners } = useStore()
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date(todayStart)
+  todayEnd.setDate(todayEnd.getDate() + 1)
 
   const notifications = ads
     .map((ad) => {
       const partner = partners.find((p) => p.id === ad.partnerId)
       const start = new Date(ad.startDate)
       const end = new Date(ad.endDate)
-      start.setHours(0, 0, 0, 0)
-      end.setHours(0, 0, 0, 0)
 
-      if (start.getTime() === today.getTime()) {
+      if (start >= todayStart && start < todayEnd) {
         return {
           id: `start-${ad.id}`,
           type: "start" as const,
@@ -27,7 +27,7 @@ export function NotificationsList() {
           date: start,
         }
       }
-      if (end.getTime() === today.getTime()) {
+      if (end >= todayStart && end < todayEnd) {
         return {
           id: `end-${ad.id}`,
           type: "end" as const,
