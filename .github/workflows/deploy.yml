@@ -28,4 +28,7 @@ jobs:
             git reset --hard origin/main
             npm ci
             NODE_ENV=production DATABASE_PATH=/var/lib/recruit-planner/database.sqlite AUTH_SECRET='${{ secrets.AUTH_SECRET }}' npm run build
-            PORT=3001 NODE_ENV=production DATABASE_PATH=/var/lib/recruit-planner/database.sqlite AUTH_SECRET='${{ secrets.AUTH_SECRET }}' pm2 start "npm run start" --name recruit-planner --update-env || pm2 restart recruit-planner --update-env
+            # Ensure old process doesn't keep stale env (port 3000)
+            pm2 delete recruit-planner || true
+            PORT=3001 NODE_ENV=production DATABASE_PATH=/var/lib/recruit-planner/database.sqlite AUTH_SECRET='${{ secrets.AUTH_SECRET }}' pm2 start "npm run start" --name recruit-planner --update-env
+            pm2 save
