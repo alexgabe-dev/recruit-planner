@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useStore } from "@/lib/db-store"
 import { toast } from "sonner"
-import { Trash2, RotateCcw, Database, Info, KeyRound } from "lucide-react"
-import { useState } from "react"
+import { Trash2, RotateCcw, Database, Info, KeyRound, User } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export function SettingsContent() {
   const { partners, ads } = useStore()
@@ -26,6 +26,18 @@ export function SettingsContent() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
+  const [me, setMe] = useState<{ username: string; email: string | null } | null>(null)
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" })
+        if (!res.ok) return
+        const data = await res.json()
+        setMe({ username: data.username, email: data.email ?? null })
+      } catch {}
+    })()
+  }, [])
 
   const handleResetData = async () => {
     try {
@@ -91,6 +103,19 @@ export function SettingsContent() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Fiók
+          </CardTitle>
+          <CardDescription>Bejelentkezett felhasználó</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm">{me ? `Bejelentkezve mint: ${me.username}` : "Bejelentkezés szükséges"}</p>
+          {me?.email && <p className="text-xs text-muted-foreground">Email: {me.email}</p>}
+        </CardContent>
+      </Card>
       {/* Data Info */}
       <Card className="border-border bg-card">
         <CardHeader>

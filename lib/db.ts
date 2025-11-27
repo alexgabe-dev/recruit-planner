@@ -39,8 +39,10 @@ export function initializeDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       office TEXT NOT NULL,
+      user_id INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `)
   
@@ -57,7 +59,9 @@ export function initializeDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       partner_id INTEGER NOT NULL,
-      FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE
+      user_id INTEGER,
+      FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `)
   
@@ -66,6 +70,7 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_ads_partner_id ON ads(partner_id);
     CREATE INDEX IF NOT EXISTS idx_ads_dates ON ads(start_date, end_date);
     CREATE INDEX IF NOT EXISTS idx_ads_active ON ads(is_active);
+    CREATE INDEX IF NOT EXISTS idx_ads_user_id ON ads(user_id);
   `)
 
   // Create users table
@@ -92,13 +97,19 @@ export function initializeDatabase() {
   if (!have.has('approval_token')) database.exec("ALTER TABLE users ADD COLUMN approval_token TEXT")
   if (!have.has('reset_token')) database.exec("ALTER TABLE users ADD COLUMN reset_token TEXT")
   if (!have.has('reset_expires')) database.exec("ALTER TABLE users ADD COLUMN reset_expires DATETIME")
+  const partnerCols = database.prepare("PRAGMA table_info(partners)").all() as { name: string }[]
+  const havePartner = new Set(partnerCols.map((c) => c.name))
+  if (!havePartner.has('user_id')) database.exec('ALTER TABLE partners ADD COLUMN user_id INTEGER')
+  const adCols = database.prepare("PRAGMA table_info(ads)").all() as { name: string }[]
+  const haveAds = new Set(adCols.map((c) => c.name))
+  if (!haveAds.has('user_id')) database.exec('ALTER TABLE ads ADD COLUMN user_id INTEGER')
 }
 
 // Partner operations
-export function getAllPartners(): Partner[] {
+export function getAllPartners(userId: number): Partner[] {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT * FROM partners ORDER BY name, office')
-  return stmt.all() as Partner[]
+  const stmt = database.prepare('SELECT * FROM partners WHERE user_id = ? ORDER BY name, office')
+  return stmt.all(userId) as Partner[]
 }
 
 export function getPartnerById(id: number): Partner | null {
@@ -107,12 +118,12 @@ export function getPartnerById(id: number): Partner | null {
   return stmt.get(id) as Partner | null
 }
 
-export function createPartner(partner: Omit<Partner, 'id'>): Partner {
+export function createPartner(partner: Omit<Partner, 'id'>, userId: number): Partner {
   const database = getDatabase()
   const stmt = database.prepare(`
-    INSERT INTO partners (name, office) VALUES (?, ?)
+    INSERT INTO partners (name, office, user_id) VALUES (?, ?, ?)
   `)
-  const result = stmt.run(partner.name, partner.office)
+  const result = stmt.run(partner.name, partner.office, userId)
   
   return {
     id: result.lastInsertRowid as number,
@@ -141,15 +152,16 @@ export function deletePartner(id: number): boolean {
 }
 
 // Ad operations
-export function getAllAds(): (Ad & { partner: Partner })[] {
+export function getAllAds(userId: number): (Ad & { partner: Partner })[] {
   const database = getDatabase()
   const stmt = database.prepare(`
     SELECT a.*, p.name as partner_name, p.office as partner_office
     FROM ads a
     JOIN partners p ON a.partner_id = p.id
+    WHERE a.user_id = ? AND p.user_id = ?
     ORDER BY a.created_at DESC
   `)
-  const rows = stmt.all() as any[]
+  const rows = stmt.all(userId, userId) as any[]
   
   return rows.map(row => ({
     id: row.id,
@@ -199,11 +211,11 @@ export function getAdById(id: number): (Ad & { partner: Partner }) | null {
   }
 }
 
-export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>): Ad {
+export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>, userId: number): Ad {
   const database = getDatabase()
   const stmt = database.prepare(`
-    INSERT INTO ads (position_name, ad_content, type, start_date, end_date, is_active, partner_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO ads (position_name, ad_content, type, start_date, end_date, is_active, partner_id, user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `)
   const result = stmt.run(
     ad.positionName,
@@ -212,7 +224,8 @@ export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>): Ad {
     ad.startDate.toISOString(),
     ad.endDate.toISOString(),
     ad.isActive ? 1 : 0,
-    ad.partnerId
+    ad.partnerId,
+    userId
   )
   
   const createdAd = getAdById(result.lastInsertRowid as number)
@@ -220,7 +233,7 @@ export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>): Ad {
   return createdAd
 }
 
-export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>): (Ad & { partner: Partner }) | null {
+export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, userId: number): (Ad & { partner: Partner }) | null {
   const database = getDatabase()
   const fields = Object.keys(ad).map(key => {
     if (key === 'positionName') return 'position_name = ?'
@@ -243,14 +256,14 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>):
   })
   
   const stmt = database.prepare(`
-    UPDATE ads SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    UPDATE ads SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
   `)
-  stmt.run(...values, id)
+  stmt.run(...values, id, userId)
   
   return getAdById(id)
 }
 
-export function deleteAd(id: number): boolean {
+export function deleteAd(id: number, userId: number): boolean {
   const database = getDatabase()
   console.log('[DB] Attempting to delete ad:', id)
   
@@ -258,8 +271,8 @@ export function deleteAd(id: number): boolean {
   const allAds = database.prepare('SELECT id, position_name FROM ads').all()
   console.log('[DB] Current ads in DB:', JSON.stringify(allAds))
   
-  const stmt = database.prepare('DELETE FROM ads WHERE id = ?')
-  const result = stmt.run(id)
+  const stmt = database.prepare('DELETE FROM ads WHERE id = ? AND user_id = ?')
+  const result = stmt.run(id, userId)
   console.log('[DB] Delete result:', result)
   return result.changes > 0
 }
