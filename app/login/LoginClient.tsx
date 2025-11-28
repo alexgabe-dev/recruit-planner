@@ -48,7 +48,7 @@ export default function LoginClient() {
             text={`Szia, ${username}!`}
             className="text-white text-6xl md:text-8xl font-black tracking-tight text-center"
             delay={80}
-            duration={0.6}
+            duration={0.4}
             ease="power3.out"
             splitType="chars"
             from={{ opacity: 0, y: 40 }}
