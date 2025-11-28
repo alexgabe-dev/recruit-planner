@@ -33,22 +33,24 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(arrayBuffer)
     const ext = (type.split("/")[1] || "png").toLowerCase()
     const uploadsDir = path.join(process.cwd(), "public", "uploads")
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
-    // Remove previous avatar files for this user to avoid clutter
-    const prefix = `user-${user.id}-`
-    const existing = fs.readdirSync(uploadsDir).filter((f) => f.startsWith(prefix))
-    for (const f of existing) {
-      try { fs.unlinkSync(path.join(uploadsDir, f)) } catch {}
+    let avatarUrl: string | null = null
+    try {
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
+      const prefix = `user-${user.id}-`
+      const existing = fs.readdirSync(uploadsDir).filter((f) => f.startsWith(prefix))
+      for (const f of existing) {
+        try { fs.unlinkSync(path.join(uploadsDir, f)) } catch {}
+      }
+      const filename = `user-${user.id}-${Date.now()}.${ext}`
+      const targetPath = path.join(uploadsDir, filename)
+      fs.writeFileSync(targetPath, buffer)
+      avatarUrl = `/uploads/${filename}`
+    } catch {
+      const base64 = buffer.toString("base64")
+      avatarUrl = `data:${type || "image/png"};base64,${base64}`
     }
-    // Use unique filename to bust caches
-    const filename = `user-${user.id}-${Date.now()}.${ext}`
-    const targetPath = path.join(uploadsDir, filename)
-    fs.writeFileSync(targetPath, buffer)
-
-    const publicUrl = `/uploads/${filename}`
-    setAvatarUrl(user.id, publicUrl)
-
-    return NextResponse.json({ success: true, avatarUrl: publicUrl })
+    setAvatarUrl(user.id, avatarUrl)
+    return NextResponse.json({ success: true, avatarUrl })
   } catch (e) {
     return NextResponse.json({ error: "Szerver hiba" }, { status: 500 })
   }
