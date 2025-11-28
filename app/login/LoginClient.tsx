@@ -107,7 +107,7 @@ export default function LoginClient() {
       )}
       {showNameModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black animate-in fade-in duration-500">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-card/90 p-6">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-neutral-900/95 text-white p-6 shadow-lg">
             <SplitText
               text="Hogyan szólíthatunk?"
               className="text-white text-2xl md:text-3xl font-bold text-center"
@@ -123,7 +123,13 @@ export default function LoginClient() {
             />
             <form onSubmit={submitDisplayName} className="mt-6 space-y-3">
               <label className="text-xs text-white/80">Keresztnév vagy becenév</label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required autoFocus className="bg-white text-black placeholder:text-neutral-500" />
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                autoFocus
+                className="bg-neutral-800 text-white placeholder:text-neutral-400 border-neutral-700 focus-visible:ring-white/50 focus-visible:border-white shadow-sm"
+              />
               {nameError && <p className="text-xs text-destructive">{nameError}</p>}
               <Button type="submit" disabled={nameSaving} className="w-full transition-transform active:scale-[0.98]">
                 {nameSaving ? 'Mentés…' : 'Mentés'}
