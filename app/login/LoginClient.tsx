@@ -19,6 +19,7 @@ export default function LoginClient() {
   const [nameSaving, setNameSaving] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
   const [nameForWelcome, setNameForWelcome] = useState<string>("")
+  const [redirectTo, setRedirectTo] = useState<string>("/")
   const approved = params.get('approved') === '1'
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -46,6 +47,7 @@ export default function LoginClient() {
           const me = await fetch('/api/auth/me')
           const meData = await me.json().catch(() => ({}))
           setNameForWelcome(meData?.displayName || username)
+          if (meData?.role === 'viewer') setRedirectTo('/advertisements')
         } catch {
           setNameForWelcome(username)
         }
@@ -75,6 +77,11 @@ export default function LoginClient() {
       }
       setShowNameModal(false)
       setNameForWelcome(displayName || username)
+      try {
+        const me = await fetch('/api/auth/me')
+        const meData = await me.json().catch(() => ({}))
+        if (meData?.role === 'viewer') setRedirectTo('/advertisements')
+      } catch {}
       setShowWelcome(true)
     } catch {
       setNameError('Szerver hiba')
@@ -99,8 +106,8 @@ export default function LoginClient() {
             threshold={0.05}
             rootMargin="-100px"
             textAlign="center"
-            onLetterAnimationComplete={() => {
-              setTimeout(() => router.replace("/"), 700)
+          onLetterAnimationComplete={() => {
+              setTimeout(() => router.replace(redirectTo), 700)
             }}
           />
         </div>

@@ -7,6 +7,7 @@ import { NotificationsList } from "./notifications-list"
 import { RecentAds } from "./recent-ads"
 import { useEffect, useState } from "react"
 import type { DashboardStats } from "@/lib/types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function DashboardContent() {
   const { ads, partners, getDashboardStats, isLoading, error } = useStore()
@@ -16,22 +17,71 @@ export function DashboardContent() {
     endingSoon: 0,
     totalPartners: 0,
   })
+  const [role, setRole] = useState<string | null>(null)
+  const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
   const isLoadingData = useLoadData()
 
   useEffect(() => {
-    if (!isLoading && !error) {
-      getDashboardStats().then(setStats).catch(console.error)
-    }
+    ;(async () => {
+      try {
+        const meRes = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (meRes.ok) {
+          const me = await meRes.json()
+          setRole(me.role || 'user')
+          if (me.role === 'viewer') {
+            const u = await fetch('/api/users', { cache: 'no-store' })
+            if (u.ok) {
+              const list = await u.json()
+              setUsers(list)
+              const last = typeof window !== 'undefined' ? window.localStorage.getItem('viewerLastUserId') : null
+              const id = last ? Number(last) : undefined
+              if (id) setSelectedUserId(id)
+              if (!isLoading && !error) {
+                getDashboardStats(id).then(setStats).catch(console.error)
+              }
+              return
+            }
+          }
+        }
+        if (!isLoading && !error) {
+          getDashboardStats().then(setStats).catch(console.error)
+        }
+      } catch {}
+    })()
   }, [isLoading, error, getDashboardStats])
 
   if (isLoadingData || isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Üdvözöljük a toborzási hirdetéskezelő rendszerben</p>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground">Üdvözöljük a toborzási hirdetéskezelő rendszerben</p>
+        {role === 'viewer' && (
+          <div className="mt-2 flex items-center gap-2">
+            <Select value={selectedUserId ? String(selectedUserId) : ''} onValueChange={(v) => {
+              const id = Number(v)
+              setSelectedUserId(id)
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('viewerLastUserId', String(id))
+              }
+              getDashboardStats(id).then(setStats).catch(console.error)
+            }}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Felhasználó" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {u.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (

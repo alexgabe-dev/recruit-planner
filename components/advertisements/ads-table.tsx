@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -39,6 +39,9 @@ type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
 
 export function AdsTable() {
   const { ads, partners } = useStore()
+  const [role, setRole] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
+  const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -63,6 +66,24 @@ export function AdsTable() {
       status: getAdStatus(ad),
     }))
   }, [ads, partners])
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (!res.ok) return
+        const me = await res.json()
+        setRole(me.role || 'user')
+        if (me.role === 'viewer') {
+          const u = await fetch('/api/users', { cache: 'no-store' })
+          if (u.ok) {
+            const list = await u.json()
+            setUsers(list)
+          }
+        }
+      } catch {}
+    })()
+  }, [])
 
   // Get unique values for filters
   const offices = useMemo(() => [...new Set(partners.map((p) => p.office))].sort(), [partners])
@@ -214,18 +235,22 @@ export function AdsTable() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Műveletek</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <Button variant="ghost" className="w-full justify-start px-2" onClick={() => setEditingAd(row.original)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Szerkesztés
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start px-2 text-destructive hover:text-destructive"
-              onClick={() => setDeletingAd(row.original)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Törlés
-            </Button>
+            {role !== 'viewer' && (
+              <Button variant="ghost" className="w-full justify-start px-2" onClick={() => setEditingAd(row.original)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Szerkesztés
+              </Button>
+            )}
+            {role !== 'viewer' && (
+              <Button
+                variant="ghost"
+                className="w-full justify-start px-2 text-destructive hover:text-destructive"
+                onClick={() => setDeletingAd(row.original)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Törlés
+              </Button>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -285,10 +310,12 @@ export function AdsTable() {
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Új hirdetés
-          </Button>
+          {role !== 'viewer' && (
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Új hirdetés
+            </Button>
+          )}
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             CSV export
@@ -397,6 +424,29 @@ export function AdsTable() {
         )}
 
         <span className="ml-auto text-sm text-muted-foreground">{filteredData.length} hirdetés</span>
+        {role === 'viewer' && (
+          <div className="flex items-center gap-2">
+            <Select value={selectedUserId ? String(selectedUserId) : ''} onValueChange={(v) => {
+              const id = Number(v)
+              setSelectedUserId(id)
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('viewerLastUserId', String(id))
+              }
+              useStore.getState().loadData(id)
+            }}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Felhasználó" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {u.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Table */}

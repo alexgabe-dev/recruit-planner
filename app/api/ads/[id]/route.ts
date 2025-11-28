@@ -9,6 +9,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
+    if (session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
     const { id: idParam } = await context.params
     const id = Number(idParam)
     const body = await request.json()
@@ -32,6 +33,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
+    if (session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
     const { id: idParam } = await context.params
     const id = Number(idParam)
     console.log("DELETE /api/ads", { id })

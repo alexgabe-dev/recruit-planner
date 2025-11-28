@@ -79,6 +79,7 @@ export function initializeDatabase() {
       username TEXT NOT NULL UNIQUE,
       hashed_password TEXT NOT NULL,
       email TEXT,
+      role TEXT DEFAULT 'user',
       status TEXT DEFAULT 'pending',
       approval_token TEXT,
       reset_token TEXT,
@@ -93,6 +94,7 @@ export function initializeDatabase() {
   const columns = database.prepare("PRAGMA table_info(users)").all() as { name: string }[]
   const have = new Set(columns.map((c) => c.name))
   if (!have.has('email')) database.exec("ALTER TABLE users ADD COLUMN email TEXT")
+  if (!have.has('role')) database.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
   if (!have.has('status')) database.exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'pending'")
   if (!have.has('approval_token')) database.exec("ALTER TABLE users ADD COLUMN approval_token TEXT")
   if (!have.has('reset_token')) database.exec("ALTER TABLE users ADD COLUMN reset_token TEXT")
@@ -285,32 +287,35 @@ export function deleteAd(id: number, userId: number): boolean {
 }
 
 // Dashboard statistics
-export function getDashboardStats() {
+export function getDashboardStats(userId?: number) {
   const database = getDatabase()
   const today = new Date().toISOString().split('T')[0]
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   
-  const activeAdsStmt = database.prepare(`
-    SELECT COUNT(*) as count FROM ads 
-    WHERE is_active = 1 AND start_date <= ? AND end_date >= ?
-  `)
-  const activeAds = activeAdsStmt.get(today, today) as { count: number }
+  const activeAdsQuery = userId
+    ? `SELECT COUNT(*) as count FROM ads WHERE is_active = 1 AND start_date <= ? AND end_date >= ? AND user_id = ?`
+    : `SELECT COUNT(*) as count FROM ads WHERE is_active = 1 AND start_date <= ? AND end_date >= ?`
+  const activeAdsStmt = database.prepare(activeAdsQuery)
+  const activeAds = userId ? (activeAdsStmt.get(today, today, userId) as { count: number }) : (activeAdsStmt.get(today, today) as { count: number })
   
-  const scheduledTodayStmt = database.prepare(`
-    SELECT COUNT(*) as count FROM ads 
-    WHERE start_date >= ? AND start_date < ?
-  `)
-  const scheduledToday = scheduledTodayStmt.get(today, tomorrow) as { count: number }
+  const scheduledTodayQuery = userId
+    ? `SELECT COUNT(*) as count FROM ads WHERE start_date >= ? AND start_date < ? AND user_id = ?`
+    : `SELECT COUNT(*) as count FROM ads WHERE start_date >= ? AND start_date < ?`
+  const scheduledTodayStmt = database.prepare(scheduledTodayQuery)
+  const scheduledToday = userId ? (scheduledTodayStmt.get(today, tomorrow, userId) as { count: number }) : (scheduledTodayStmt.get(today, tomorrow) as { count: number })
   
-  const endingSoonStmt = database.prepare(`
-    SELECT COUNT(*) as count FROM ads 
-    WHERE end_date >= ? AND end_date <= ? AND is_active = 1
-  `)
-  const endingSoon = endingSoonStmt.get(today, sevenDaysLater) as { count: number }
+  const endingSoonQuery = userId
+    ? `SELECT COUNT(*) as count FROM ads WHERE end_date >= ? AND end_date <= ? AND is_active = 1 AND user_id = ?`
+    : `SELECT COUNT(*) as count FROM ads WHERE end_date >= ? AND end_date <= ? AND is_active = 1`
+  const endingSoonStmt = database.prepare(endingSoonQuery)
+  const endingSoon = userId ? (endingSoonStmt.get(today, sevenDaysLater, userId) as { count: number }) : (endingSoonStmt.get(today, sevenDaysLater) as { count: number })
   
-  const totalPartnersStmt = database.prepare('SELECT COUNT(*) as count FROM partners')
-  const totalPartners = totalPartnersStmt.get() as { count: number }
+  const totalPartnersQuery = userId
+    ? 'SELECT COUNT(*) as count FROM partners WHERE user_id = ?'
+    : 'SELECT COUNT(*) as count FROM partners'
+  const totalPartnersStmt = database.prepare(totalPartnersQuery)
+  const totalPartners = userId ? (totalPartnersStmt.get(userId) as { count: number }) : (totalPartnersStmt.get() as { count: number })
   
   return {
     activeAds: activeAds.count,
@@ -326,6 +331,7 @@ export interface User {
   username: string
   hashed_password: string
   email?: string | null
+  role?: string | null
   status?: string | null
   approval_token?: string | null
   reset_token?: string | null
@@ -335,14 +341,14 @@ export interface User {
 
 export function getUserByUsername(username: string): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password, email, status, display_name FROM users WHERE username = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, display_name FROM users WHERE username = ?')
   const row = stmt.get(username) as User | undefined
   return row ?? null
 }
 
 export function getUserByEmail(email: string): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password, email, status FROM users WHERE email = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status FROM users WHERE email = ?')
   const row = stmt.get(email) as User | undefined
   return row ?? null
 }
@@ -356,19 +362,21 @@ export function createUser(username: string, hashedPassword: string): User {
     username,
     hashed_password: hashedPassword,
     email: null as any,
+    role: 'user',
     status: 'pending',
   }
 }
 
 export function createPendingUser({ username, email, hashedPassword, approvalToken }: { username: string; email: string; hashedPassword: string; approvalToken: string }): User {
   const database = getDatabase()
-  const stmt = database.prepare('INSERT INTO users (username, email, hashed_password, status, approval_token) VALUES (?, ?, ?, ?, ?)')
-  const result = stmt.run(username, email, hashedPassword, 'pending', approvalToken)
+  const stmt = database.prepare('INSERT INTO users (username, email, hashed_password, role, status, approval_token) VALUES (?, ?, ?, ?, ?, ?)')
+  const result = stmt.run(username, email, hashedPassword, 'user', 'pending', approvalToken)
   return {
     id: result.lastInsertRowid as number,
     username,
     hashed_password: hashedPassword,
     email,
+    role: 'user',
     status: 'pending',
     approval_token: approvalToken,
   }
@@ -376,10 +384,10 @@ export function createPendingUser({ username, email, hashedPassword, approvalTok
 
 export function approveUserByToken(token: string): User | null {
   const database = getDatabase()
-  const user = database.prepare('SELECT id, username, email, status, display_name FROM users WHERE approval_token = ?').get(token) as User | undefined
+  const user = database.prepare('SELECT id, username, email, role, status, display_name FROM users WHERE approval_token = ?').get(token) as User | undefined
   if (!user) return null
   database.prepare("UPDATE users SET status = 'active', approval_token = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(user.id)
-  const updated = database.prepare('SELECT id, username, email, status, display_name FROM users WHERE id = ?').get(user.id) as User
+  const updated = database.prepare('SELECT id, username, email, role, status, display_name FROM users WHERE id = ?').get(user.id) as User
   return updated
 }
 
@@ -390,7 +398,7 @@ export function setResetTokenForUser(userId: number, token: string, expires: Dat
 
 export function getUserByResetToken(token: string): User | null {
   const database = getDatabase()
-  const row = database.prepare('SELECT id, username, email, reset_token, reset_expires, display_name FROM users WHERE reset_token = ?').get(token) as any
+  const row = database.prepare('SELECT id, username, email, role, reset_token, reset_expires, display_name FROM users WHERE reset_token = ?').get(token) as any
   return row ?? null
 }
 
@@ -402,4 +410,10 @@ export function clearResetToken(userId: number): void {
 export function setDisplayName(userId: number, displayName: string): void {
   const database = getDatabase()
   database.prepare('UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(displayName, userId)
+}
+
+export function listUsers(): { id: number; username: string; display_name: string | null }[] {
+  const database = getDatabase()
+  const rows = database.prepare('SELECT id, username, display_name FROM users ORDER BY username').all() as any[]
+  return rows.map((r) => ({ id: r.id, username: r.username, display_name: r.display_name ?? null }))
 }

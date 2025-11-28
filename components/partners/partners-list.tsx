@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,13 +18,37 @@ import { Plus, Search, MoreHorizontal, Pencil, Trash2, Building2 } from "lucide-
 import { PartnerFormDialog } from "./partner-form-dialog"
 import { DeletePartnerDialog } from "./delete-partner-dialog"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function PartnersList() {
   const { partners, ads } = useStore()
+  const [role, setRole] = useState<string | null>(null)
+  const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null)
   const [deletingPartner, setDeletingPartner] = useState<Partner | null>(null)
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (!res.ok) return
+        const me = await res.json()
+        setRole(me.role || 'user')
+        if (me.role === 'viewer') {
+          const u = await fetch('/api/users', { cache: 'no-store' })
+          if (u.ok) {
+            const list = await u.json()
+            setUsers(list)
+            const last = typeof window !== 'undefined' ? window.localStorage.getItem('viewerLastUserId') : null
+            if (last) setSelectedUserId(Number(last))
+          }
+        }
+      } catch {}
+    })()
+  }, [])
 
   // Partners with ad counts
   const partnersWithStats = useMemo(() => {
@@ -73,10 +97,35 @@ export function PartnersList() {
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Új partner
-        </Button>
+        {role !== 'viewer' && (
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Új partner
+          </Button>
+        )}
+        {role === 'viewer' && (
+          <div className="flex items-center gap-2">
+            <Select value={selectedUserId ? String(selectedUserId) : ''} onValueChange={(v) => {
+              const id = Number(v)
+              setSelectedUserId(id)
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('viewerLastUserId', String(id))
+              }
+              useStore.getState().loadData(id)
+            }}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Felhasználó" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {u.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -175,22 +224,26 @@ export function PartnersList() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Műveletek</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start px-2"
-                              onClick={() => setEditingPartner(partner)}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Szerkesztés
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start px-2 text-destructive hover:text-destructive"
-                              onClick={() => setDeletingPartner(partner)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Törlés
-                            </Button>
+                            {role !== 'viewer' && (
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start px-2"
+                                onClick={() => setEditingPartner(partner)}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Szerkesztés
+                              </Button>
+                            )}
+                            {role !== 'viewer' && (
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start px-2 text-destructive hover:text-destructive"
+                                onClick={() => setDeletingPartner(partner)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Törlés
+                              </Button>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
   const user = getUserByUsername(session.username)
   if (!user) return NextResponse.json({ error: "Felhasználó nem található" }, { status: 404 })
-  return NextResponse.json({ id: user.id, username: user.username, email: user.email ?? null, displayName: user.display_name ?? null })
+  return NextResponse.json({ id: user.id, username: user.username, email: user.email ?? null, displayName: user.display_name ?? null, role: user.role ?? 'user' })
 }
 
 export async function PATCH(req: Request) {

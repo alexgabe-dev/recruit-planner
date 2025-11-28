@@ -27,7 +27,7 @@ export function SettingsContent() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null } | null>(null)
   const [displayName, setDisplayName] = useState("")
   const [savingName, setSavingName] = useState(false)
 
@@ -37,7 +37,7 @@ export function SettingsContent() {
         const res = await fetch("/api/auth/me", { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null })
+        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, role: data.role ?? null })
         setDisplayName(data.displayName ?? "")
       } catch {}
     })()
@@ -151,6 +151,7 @@ export function SettingsContent() {
               <p className="text-sm">{me ? `Bejelentkezve mint: ${me.username}` : "Bejelentkezés szükséges"}</p>
               {me?.email && <p className="text-xs text-muted-foreground">Email: {me.email}</p>}
               {me?.displayName && <p className="text-xs text-muted-foreground">Megjelenített név: {me.displayName}</p>}
+              {me?.role && <p className="text-xs text-muted-foreground">Szerepkör: {me.role}</p>}
             </div>
           </div>
           <div className="space-y-2">
@@ -199,6 +200,7 @@ export function SettingsContent() {
       </Card>
 
       {/* Data Management */}
+      {me?.role !== 'viewer' && (
       <Card className="border-border bg-card h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -257,6 +259,7 @@ export function SettingsContent() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Password Change */}
       <Card className="border-border bg-card h-full">

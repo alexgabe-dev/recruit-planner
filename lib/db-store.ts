@@ -10,7 +10,7 @@ interface Store {
   isLoading: boolean
   error: string | null
   
-  loadData: () => Promise<void>
+  loadData: (userIdOverride?: number) => Promise<void>
   addPartner: (partner: Omit<Partner, "id">) => Promise<void>
   updatePartner: (id: number, partner: Partial<Partner>) => Promise<void>
   deletePartner: (id: number) => Promise<void>
@@ -26,10 +26,11 @@ export const useStore = create<Store>()((set) => ({
   isLoading: true,
   error: null,
 
-  loadData: async () => {
+  loadData: async (userIdOverride) => {
     try {
       set({ isLoading: true, error: null })
-      const res = await fetch("/api/data", { cache: "no-store" })
+      const qs = userIdOverride ? `?userId=${userIdOverride}` : ""
+      const res = await fetch(`/api/data${qs}`, { cache: "no-store" })
       if (!res.ok) throw new Error("Failed to fetch data")
       const data = await res.json()
       set({ partners: data.partners, ads: data.ads, isLoading: false })
@@ -140,9 +141,10 @@ export const useStore = create<Store>()((set) => ({
     }
   },
 
-  getDashboardStats: async () => {
+  getDashboardStats: async (userIdOverride?: number) => {
     try {
-      const res = await fetch("/api/stats")
+      const qs = userIdOverride ? `?userId=${userIdOverride}` : ""
+      const res = await fetch(`/api/stats${qs}`)
       if (!res.ok) throw new Error("Failed to fetch stats")
       return (await res.json()) as DashboardStats
     } catch (error) {
@@ -156,7 +158,25 @@ export function useLoadData() {
   const loadData = useStore((s) => s.loadData)
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
-    loadData().finally(() => setIsLoading(false))
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (res.ok) {
+          const me = await res.json()
+          if (me.role === 'viewer') {
+            const last = typeof window !== 'undefined' ? window.localStorage.getItem('viewerLastUserId') : null
+            const id = last ? Number(last) : undefined
+            await loadData(id)
+          } else {
+            await loadData()
+          }
+        } else {
+          await loadData()
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    })()
   }, [loadData])
   return isLoading
 }

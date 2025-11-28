@@ -8,7 +8,13 @@ export async function GET(req: Request) {
   try {
     const session = await getSession(req)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    const partners = getAllPartners(session.userId)
+    const url = new URL(req.url)
+    const userParam = url.searchParams.get('userId')
+    if (session.role === 'viewer' && !userParam) {
+      return NextResponse.json([])
+    }
+    const targetUserId = session.role === 'viewer' ? Number(userParam) || session.userId : session.userId
+    const partners = getAllPartners(targetUserId)
     return NextResponse.json(partners)
   } catch {
     return NextResponse.json({ error: "Failed to fetch partners" }, { status: 500 })
@@ -19,6 +25,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
+    if (session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
     const body = await request.json()
     const created = createPartner(body, session.userId)
     return NextResponse.json(created, { status: 201 })

@@ -43,8 +43,9 @@ async function verifyToken(token: string, key?: Uint8Array) {
     const sub = payload.sub
     const userId = typeof sub === "string" ? Number(sub) : typeof sub === "number" ? sub : undefined
     const username = typeof payload.username === "string" ? payload.username : undefined
+    const role = typeof (payload as any).role === "string" ? (payload as any).role : undefined
     if (!userId || !username) return null
-    return { userId, username }
+    return { userId, username, role: role || "user" }
   } catch {
     return null
   }

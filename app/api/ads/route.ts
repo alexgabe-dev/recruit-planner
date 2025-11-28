@@ -9,7 +9,13 @@ export async function GET(req: Request) {
   try {
     const session = await getSession(req)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    const ads = getAllAds(session.userId)
+    const url = new URL(req.url)
+    const userParam = url.searchParams.get('userId')
+    if (session.role === 'viewer' && !userParam) {
+      return NextResponse.json([])
+    }
+    const targetUserId = session.role === 'viewer' ? Number(userParam) || session.userId : session.userId
+    const ads = getAllAds(targetUserId)
     return NextResponse.json(ads)
   } catch {
     return NextResponse.json({ error: "Failed to fetch ads" }, { status: 500 })
@@ -20,6 +26,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
+    if (session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
     const body = await request.json()
     const payload: Omit<Ad, "id" | "createdAt"> = {
       positionName: body.positionName,
