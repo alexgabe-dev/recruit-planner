@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,8 +103,8 @@ export function SettingsContent() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card className="border-border bg-card">
+    <div className="grid gap-6 lg:grid-cols-2 items-stretch">
+      <Card className="border-border bg-card h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -112,12 +113,20 @@ export function SettingsContent() {
           <CardDescription>Bejelentkezett felhasználó</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm">{me ? `Bejelentkezve mint: ${me.username}` : "Bejelentkezés szükséges"}</p>
-          {me?.email && <p className="text-xs text-muted-foreground">Email: {me.email}</p>}
+          <div className="flex items-center gap-4">
+            <Avatar className="size-12">
+              <AvatarImage src="/placeholder-user.jpg" alt={me?.username ?? "Felhasználó"} />
+              <AvatarFallback>{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm">{me ? `Bejelentkezve mint: ${me.username}` : "Bejelentkezés szükséges"}</p>
+              {me?.email && <p className="text-xs text-muted-foreground">Email: {me.email}</p>}
+            </div>
+          </div>
         </CardContent>
       </Card>
       {/* Data Info */}
-      <Card className="border-border bg-card">
+      <Card className="border-border bg-card h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
@@ -141,7 +150,7 @@ export function SettingsContent() {
       </Card>
 
       {/* Data Management */}
-      <Card className="border-border bg-card">
+      <Card className="border-border bg-card h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <RotateCcw className="h-5 w-5" />
@@ -201,7 +210,7 @@ export function SettingsContent() {
       </Card>
 
       {/* Password Change */}
-      <Card className="border-border bg-card lg:col-span-2">
+      <Card className="border-border bg-card h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <KeyRound className="h-5 w-5" />
@@ -210,24 +219,24 @@ export function SettingsContent() {
           <CardDescription>Jelenlegi jelszó ellenőrzése után új jelszó beállítása</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm">Jelenlegi jelszó</label>
-            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm">Jelenlegi jelszó</label>
+              <Input className="w-full" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <label className="text-sm">Új jelszó</label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <Input className="w-full" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm">Új jelszó megerősítése</label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Input className="w-full" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
+            <Button onClick={handleChangePassword} disabled={changing} className="w-full">
+              {changing ? "Frissítés..." : "Jelszó frissítése"}
+            </Button>
+            <p className="text-xs text-muted-foreground">Minimum 8 karakter. Sikeres módosítás után a munkamenet megmarad.</p>
           </div>
-          <Button onClick={handleChangePassword} disabled={changing} className="w-full sm:w-auto">
-            {changing ? "Frissítés..." : "Jelszó frissítése"}
-          </Button>
-          <p className="text-xs text-muted-foreground">Minimum 8 karakter. Sikeres módosítás után a munkamenet megmarad.</p>
         </CardContent>
       </Card>
 
