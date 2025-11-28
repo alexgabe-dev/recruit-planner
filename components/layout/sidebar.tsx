@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LayoutDashboard, Table2, Building2, Settings, ChevronLeft, ChevronRight, Megaphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import SplitText from "@/components/SplitText"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -19,6 +20,18 @@ export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null } | null>(null)
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" })
+        if (!res.ok) return
+        const data = await res.json()
+        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null })
+      } catch {}
+    })()
+  }, [])
 
   return (
     <aside
@@ -45,14 +58,14 @@ export function Sidebar() {
             />
           </div>
         )}
-        {/* Header */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
-                <Megaphone className="h-4 w-4 text-sidebar-primary-foreground" />
-              </div>
-              <span className="font-semibold text-sidebar-foreground">recruit-planner</span>
+            <div className="flex items-center gap-3">
+              <Avatar className="size-8">
+                <AvatarImage src="/placeholder-user.jpg" alt={me?.username ?? "Felhasználó"} />
+                <AvatarFallback>{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
+              </Avatar>
+              <span className="font-semibold text-sidebar-foreground">{me?.displayName || me?.username || "Felhasználó"}</span>
             </div>
           )}
           <Button
