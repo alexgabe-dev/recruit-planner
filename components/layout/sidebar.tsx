@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LayoutDashboard, Table2, Building2, Settings, ChevronLeft, ChevronRight, Megaphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import SplitText from "@/components/SplitText"
 import { useState } from "react"
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   return (
     <aside
@@ -26,6 +28,23 @@ export function Sidebar() {
       )}
     >
       <div className="flex h-full flex-col">
+        {loggingOut && (
+          <div className="fixed inset-0 z-[60] grid place-items-center bg-black/90 animate-in fade-in duration-300">
+            <SplitText
+              text="Viszlát!"
+              className="text-white text-3xl md:text-5xl font-bold text-center"
+              delay={60}
+              duration={0.5}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 30 }}
+              to={{ opacity: 1, y: 0 }}
+              threshold={0.05}
+              rootMargin="-100px"
+              textAlign="center"
+            />
+          </div>
+        )}
         {/* Header */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           {!collapsed && (
@@ -78,8 +97,13 @@ export function Sidebar() {
               className="flex"
               onSubmit={async (e) => {
                 e.preventDefault()
-                await fetch("/api/auth/logout", { method: "POST" })
-                window.location.href = "/login"
+                setLoggingOut(true)
+                try {
+                  await fetch("/api/auth/logout", { method: "POST" })
+                } catch {}
+                setTimeout(() => {
+                  window.location.href = "/login"
+                }, 800)
               }}
             >
               <Button variant="outline" className="w-full">Kijelentkezés</Button>

@@ -27,7 +27,9 @@ export function SettingsContent() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null } | null>(null)
+  const [displayName, setDisplayName] = useState("")
+  const [savingName, setSavingName] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -35,7 +37,8 @@ export function SettingsContent() {
         const res = await fetch("/api/auth/me", { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        setMe({ username: data.username, email: data.email ?? null })
+        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null })
+        setDisplayName(data.displayName ?? "")
       } catch {}
     })()
   }, [])
@@ -52,6 +55,32 @@ export function SettingsContent() {
       toast.success("Alapértelmezett adatok visszaállítva")
     } catch (e) {
       toast.error("Hiba: nem sikerült visszaállítani az adatokat")
+    }
+  }
+
+  const handleSaveDisplayName = async () => {
+    if (!displayName.trim()) {
+      toast.error("Adj meg egy nevet")
+      return
+    }
+    setSavingName(true)
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName: displayName.trim() })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error((data as any).error || 'Sikertelen mentés')
+      } else {
+        toast.success('Megjelenített név frissítve')
+        setMe((prev) => prev ? { ...prev, displayName: displayName.trim() } : prev)
+      }
+    } catch {
+      toast.error('Szerver hiba')
+    } finally {
+      setSavingName(false)
     }
   }
 
@@ -112,7 +141,7 @@ export function SettingsContent() {
           </CardTitle>
           <CardDescription>Bejelentkezett felhasználó</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
             <Avatar className="size-12">
               <AvatarImage src="/placeholder-user.jpg" alt={me?.username ?? "Felhasználó"} />
@@ -121,8 +150,28 @@ export function SettingsContent() {
             <div>
               <p className="text-sm">{me ? `Bejelentkezve mint: ${me.username}` : "Bejelentkezés szükséges"}</p>
               {me?.email && <p className="text-xs text-muted-foreground">Email: {me.email}</p>}
+              {me?.displayName && <p className="text-xs text-muted-foreground">Megjelenített név: {me.displayName}</p>}
             </div>
           </div>
+          <div className="space-y-2">
+            <label className="text-sm">Megjelenített név</label>
+            <div className="flex items-center gap-2">
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Pl. Ádám" />
+              <Button onClick={handleSaveDisplayName} disabled={savingName}>{savingName ? 'Mentés…' : 'Mentés'}</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Ezt a nevet használjuk az üdvözlésnél és a felületen.</p>
+          </div>
+          <form
+            action="/api/auth/logout"
+            method="POST"
+            onSubmit={async (e) => {
+              e.preventDefault()
+              await fetch('/api/auth/logout', { method: 'POST' })
+              window.location.href = '/login'
+            }}
+          >
+            <Button variant="outline" className="w-full">Kijelentkezés</Button>
+          </form>
         </CardContent>
       </Card>
       {/* Data Info */}
