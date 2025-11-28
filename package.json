@@ -11,6 +11,7 @@
     "db:reset": "rm -f database.sqlite && npm run db:init"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "latest",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -51,6 +52,7 @@
     "date-fns": "latest",
     "dotenv": "^17.2.3",
     "embla-carousel-react": "8.5.1",
+    "gsap": "^3.13.0",
     "immer": "latest",
     "input-otp": "1.4.1",
     "jose": "^6.1.2",

@@ -45,7 +45,7 @@ export default function RegisterPage() {
       <div className="absolute inset-0 opacity-30">
         <Orb hue={220} hoverIntensity={0.1} />
       </div>
-      <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur">
+      <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur animate-in fade-in slide-in-from-bottom-4 duration-500">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">Regisztráció</CardTitle>
         </CardHeader>
@@ -55,29 +55,29 @@ export default function RegisterPage() {
               <p className="text-sm text-muted-foreground">
                 Köszönjük! A regisztráció „jóváhagyásra vár”. Az adminisztrátor értesítést kapott.
               </p>
-              <Button onClick={() => router.push("/login")}>Vissza a bejelentkezéshez</Button>
+              <Button onClick={() => router.push("/login")} className="transition-transform active:scale-[0.98]">Vissza a bejelentkezéshez</Button>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="space-y-1">
                 <label className="text-sm">Felhasználónév</label>
-                <Input value={username} onChange={(e) => setUsername(e.target.value)} required />
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} required className="transition-colors focus:shadow-sm" />
               </div>
               <div className="space-y-1">
                 <label className="text-sm">Email</label>
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="transition-colors focus:shadow-sm" />
               </div>
               <div className="space-y-1">
                 <label className="text-sm">Jelszó</label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="transition-colors focus:shadow-sm" />
                 <p className="text-xs text-muted-foreground">Legalább 8 karakter</p>
               </div>
-              <Button className="w-full" disabled={loading} type="submit">
+              <Button className="w-full transition-transform active:scale-[0.98]" disabled={loading} type="submit">
                 {loading ? "Folyamatban…" : "Regisztráció küldése"}
               </Button>
               <div className="text-center">
-                <Button variant="ghost" type="button" onClick={() => router.push("/login")}>Mégse</Button>
+                <Button variant="ghost" type="button" onClick={() => router.push("/login")} className="transition-transform active:scale-[0.98]">Mégse</Button>
               </div>
             </form>
           )}

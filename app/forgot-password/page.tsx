@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
       <div className="absolute inset-0 opacity-30">
         <Orb hue={220} hoverIntensity={0.1} />
       </div>
-      <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur">
+      <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur animate-in fade-in slide-in-from-bottom-4 duration-500">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">Elfelejtett jelszó</CardTitle>
         </CardHeader>
@@ -53,9 +53,9 @@ export default function ForgotPasswordPage() {
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="space-y-1">
                 <label className="text-sm">Felhasználónév vagy email</label>
-                <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
+                <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} required className="transition-colors focus:shadow-sm" />
               </div>
-              <Button className="w-full" disabled={loading} type="submit">
+              <Button className="w-full transition-transform active:scale-[0.98]" disabled={loading} type="submit">
                 {loading ? "Folyamatban…" : "Visszaállítási link kérése"}
               </Button>
             </form>

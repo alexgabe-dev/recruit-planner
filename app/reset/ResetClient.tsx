@@ -47,7 +47,7 @@ export default function ResetClient() {
   }
 
   return (
-    <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur">
+    <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur animate-in fade-in slide-in-from-bottom-4 duration-500">
       <CardHeader>
         <CardTitle className="text-center text-2xl font-bold">Jelszó visszaállítása</CardTitle>
       </CardHeader>
@@ -55,16 +55,16 @@ export default function ResetClient() {
         {success ? (
           <div className="space-y-2 text-center">
             <p className="text-sm text-muted-foreground">Sikeres visszaállítás. Bejelentkezhetsz az új jelszóval.</p>
-            <Button onClick={() => router.push("/login")}>Bejelentkezés</Button>
+            <Button onClick={() => router.push("/login")} className="transition-transform active:scale-[0.98]">Bejelentkezés</Button>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1">
               <label className="text-sm">Új jelszó</label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="transition-colors focus:shadow-sm" />
             </div>
-            <Button className="w-full" disabled={loading || !token} type="submit">
+            <Button className="w-full transition-transform active:scale-[0.98]" disabled={loading || !token} type="submit">
               {loading ? "Folyamatban…" : "Jelszó beállítása"}
             </Button>
           </form>
