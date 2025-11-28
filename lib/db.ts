@@ -65,12 +65,11 @@ export function initializeDatabase() {
     )
   `)
   
-  // Create indexes for better performance
+  // Create indexes for better performance (basic indexes that don't depend on migrations)
   database.exec(`
     CREATE INDEX IF NOT EXISTS idx_ads_partner_id ON ads(partner_id);
     CREATE INDEX IF NOT EXISTS idx_ads_dates ON ads(start_date, end_date);
     CREATE INDEX IF NOT EXISTS idx_ads_active ON ads(is_active);
-    CREATE INDEX IF NOT EXISTS idx_ads_user_id ON ads(user_id);
   `)
 
   // Create users table
@@ -103,6 +102,12 @@ export function initializeDatabase() {
   const adCols = database.prepare("PRAGMA table_info(ads)").all() as { name: string }[]
   const haveAds = new Set(adCols.map((c) => c.name))
   if (!haveAds.has('user_id')) database.exec('ALTER TABLE ads ADD COLUMN user_id INTEGER')
+
+  // Create indexes that depend on migrated columns
+  database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_partners_user_id ON partners(user_id);
+    CREATE INDEX IF NOT EXISTS idx_ads_user_id ON ads(user_id);
+  `)
 }
 
 // Partner operations
