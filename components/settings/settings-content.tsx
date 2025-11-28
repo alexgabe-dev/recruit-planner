@@ -15,10 +15,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import { useStore } from "@/lib/db-store"
 import { toast } from "sonner"
-import { Trash2, RotateCcw, Database, Info, KeyRound, User } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Trash2, RotateCcw, Database, Info, KeyRound, User, Camera } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
 
 export function SettingsContent() {
   const { partners, ads } = useStore()
@@ -27,9 +30,19 @@ export function SettingsContent() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null; avatarUrl?: string | null } | null>(null)
   const [displayName, setDisplayName] = useState("")
   const [savingName, setSavingName] = useState(false)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [cropEl, setCropEl] = useState<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -37,7 +50,7 @@ export function SettingsContent() {
         const res = await fetch("/api/auth/me", { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, role: data.role ?? null })
+        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, role: data.role ?? null, avatarUrl: data.avatarUrl ?? null })
         setDisplayName(data.displayName ?? "")
       } catch {}
     })()
@@ -131,48 +144,223 @@ export function SettingsContent() {
     }
   }
 
+  const openCropperWithFile = (file: File) => {
+    setAvatarFile(file)
+    const url = URL.createObjectURL(file)
+    setCropSrc(url)
+    
+    const img = document.createElement("img")
+    img.src = url
+    img.onload = () => {
+      const containerSize = 256 // w-64
+      const minDim = Math.min(img.naturalWidth, img.naturalHeight)
+      const scaleToFit = containerSize / minDim
+      setZoom(scaleToFit)
+      
+      // Center it
+      const displayWidth = img.naturalWidth * scaleToFit
+      const displayHeight = img.naturalHeight * scaleToFit
+      setOffset({
+        x: (containerSize - displayWidth) / 2,
+        y: (containerSize - displayHeight) / 2
+      })
+      setCropOpen(true)
+    }
+  }
+
+  const cropToBlob = async (): Promise<Blob | null> => {
+    if (!cropSrc || !cropEl) return null
+    const img = document.createElement("img")
+    img.src = cropSrc
+    await new Promise((resolve) => (img.onload = resolve as any))
+    const rect = cropEl.getBoundingClientRect()
+    const size = Math.min(rect.width, rect.height)
+    const canvas = document.createElement("canvas")
+    canvas.width = 512
+    canvas.height = 512
+    const ctx = canvas.getContext("2d")!
+    const k = canvas.width / size
+    const destScale = zoom * k
+    const dx = offset.x * k
+    const dy = offset.y * k
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(
+      img,
+      0,
+      0,
+      img.naturalWidth,
+      img.naturalHeight,
+      dx,
+      dy,
+      img.naturalWidth * destScale,
+      img.naturalHeight * destScale,
+    )
+    return await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"))
+  }
+
+  const handleSaveCropped = async () => {
+    setUploading(true)
+    try {
+      const blob = await cropToBlob()
+      if (!blob) throw new Error("crop failed")
+      const form = new FormData()
+      form.append("avatar", new File([blob], "avatar.png", { type: "image/png" }))
+      const res = await fetch("/api/auth/avatar", { method: "POST", body: form })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error((data as any).error || "Sikertelen feltöltés")
+      } else {
+        toast.success("Avatar frissítve")
+        setMe((prev) => (prev ? { ...prev, avatarUrl: (data as any).avatarUrl } : prev))
+        setAvatarFile(null)
+        setCropOpen(false)
+        if (cropSrc) URL.revokeObjectURL(cropSrc)
+        window.dispatchEvent(new CustomEvent("avatar-updated", { detail: (data as any).avatarUrl }))
+      }
+    } catch {
+      toast.error("Szerver hiba")
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-2 items-stretch">
-      <Card className="border-border bg-card h-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Fiók
-          </CardTitle>
-          <CardDescription>Bejelentkezett felhasználó</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="size-12">
-              <AvatarImage src="/placeholder-user.jpg" alt={me?.username ?? "Felhasználó"} />
-              <AvatarFallback>{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm">{me ? `Bejelentkezve mint: ${me.username}` : "Bejelentkezés szükséges"}</p>
-              {me?.email && <p className="text-xs text-muted-foreground">Email: {me.email}</p>}
-              {me?.displayName && <p className="text-xs text-muted-foreground">Megjelenített név: {me.displayName}</p>}
-              {me?.role && <p className="text-xs text-muted-foreground">Szerepkör: {me.role}</p>}
+      <Card className="border-border bg-card h-full overflow-hidden">
+        <div className="h-32 bg-gradient-to-r from-muted to-muted/50 relative">
+          <div className="absolute -bottom-12 left-6">
+            <div
+              className="relative group cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Avatar className="size-24 border-4 border-card shadow-sm">
+                <AvatarImage src={me?.avatarUrl ?? "/placeholder-user.jpg"} alt={me?.username ?? "Felhasználó"} className="object-cover" />
+                <AvatarFallback className="text-2xl">{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="text-white w-8 h-8" />
+              </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm">Megjelenített név</label>
-            <div className="flex items-center gap-2">
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Pl. Ádám" />
-              <Button onClick={handleSaveDisplayName} disabled={savingName}>{savingName ? 'Mentés…' : 'Mentés'}</Button>
+        </div>
+        <CardContent className="pt-16 space-y-8">
+          <div>
+            <h2 className="text-2xl font-bold">{me?.displayName || me?.username || "Betöltés..."}</h2>
+            <p className="text-muted-foreground">@{me?.username}</p>
+            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+              {me?.role && <span className="px-2 py-0.5 rounded-full bg-muted font-medium capitalize">{me.role}</span>}
+              {me?.email && <span>{me.email}</span>}
             </div>
-            <p className="text-xs text-muted-foreground">Ezt a nevet használjuk az üdvözlésnél és a felületen.</p>
           </div>
-          <form
-            action="/api/auth/logout"
-            method="POST"
-            onSubmit={async (e) => {
-              e.preventDefault()
-              await fetch('/api/auth/logout', { method: 'POST' })
-              window.location.href = '/login'
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Megjelenített név</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Pl. Ádám"
+                />
+                <Button onClick={handleSaveDisplayName} disabled={savingName}>
+                  {savingName ? 'Mentés...' : 'Mentés'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Ezt a nevet használjuk az üdvözlésnél és a felületen.</p>
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null
+              if (f) {
+                if (cropSrc) URL.revokeObjectURL(cropSrc)
+                openCropperWithFile(f)
+              }
             }}
-          >
-            <Button variant="outline" className="w-full">Kijelentkezés</Button>
-          </form>
+          />
+
+          <Dialog open={cropOpen} onOpenChange={setCropOpen}>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Profilkép szerkesztése</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div
+                  ref={setCropEl}
+                  className="relative mx-auto size-64 overflow-hidden rounded-full bg-muted"
+                  onMouseDown={(e) => {
+                    setDragging(true)
+                    setDragStart({ x: e.clientX, y: e.clientY })
+                  }}
+                  onMouseMove={(e) => {
+                    if (!dragging || !dragStart) return
+                    const dx = e.clientX - dragStart.x
+                    const dy = e.clientY - dragStart.y
+                    setOffset((o) => ({ x: o.x + dx, y: o.y + dy }))
+                    setDragStart({ x: e.clientX, y: e.clientY })
+                  }}
+                  onMouseUp={() => {
+                    setDragging(false)
+                    setDragStart(null)
+                  }}
+                  onMouseLeave={() => {
+                    setDragging(false)
+                    setDragStart(null)
+                  }}
+                >
+                  {cropSrc && (
+                    <img
+                      src={cropSrc}
+                      alt="crop"
+                      className="absolute top-0 left-0 select-none max-w-none max-h-none"
+                      style={{ width: 'auto', height: 'auto', transformOrigin: 'top left', transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}
+                      draggable={false}
+                    />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Nagyítás</label>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={5}
+                    step={0.01}
+                    value={zoom}
+                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleSaveCropped} disabled={uploading}>{uploading ? "Mentés…" : "Mentés"}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Kijelentkezés</Label>
+              <p className="text-xs text-muted-foreground">Kilépés a jelenlegi munkamenetből</p>
+            </div>
+            <form
+              action="/api/auth/logout"
+              method="POST"
+              onSubmit={async (e) => {
+                e.preventDefault()
+                await fetch('/api/auth/logout', { method: 'POST' })
+                window.location.href = '/login'
+              }}
+            >
+              <Button variant="destructive" size="sm">Kijelentkezés</Button>
+            </form>
+          </div>
         </CardContent>
       </Card>
       {/* Data Info */}

@@ -85,6 +85,7 @@ export function initializeDatabase() {
       reset_token TEXT,
       reset_expires DATETIME,
       display_name TEXT,
+      avatar_url TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -100,6 +101,7 @@ export function initializeDatabase() {
   if (!have.has('reset_token')) database.exec("ALTER TABLE users ADD COLUMN reset_token TEXT")
   if (!have.has('reset_expires')) database.exec("ALTER TABLE users ADD COLUMN reset_expires DATETIME")
   if (!have.has('display_name')) database.exec("ALTER TABLE users ADD COLUMN display_name TEXT")
+  if (!have.has('avatar_url')) database.exec("ALTER TABLE users ADD COLUMN avatar_url TEXT")
   const partnerCols = database.prepare("PRAGMA table_info(partners)").all() as { name: string }[]
   const havePartner = new Set(partnerCols.map((c) => c.name))
   if (!havePartner.has('user_id')) database.exec('ALTER TABLE partners ADD COLUMN user_id INTEGER')
@@ -337,11 +339,12 @@ export interface User {
   reset_token?: string | null
   reset_expires?: Date | null
   display_name?: string | null
+  avatar_url?: string | null
 }
 
 export function getUserByUsername(username: string): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, display_name FROM users WHERE username = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, display_name, avatar_url FROM users WHERE username = ?')
   const row = stmt.get(username) as User | undefined
   return row ?? null
 }
@@ -384,10 +387,10 @@ export function createPendingUser({ username, email, hashedPassword, approvalTok
 
 export function approveUserByToken(token: string): User | null {
   const database = getDatabase()
-  const user = database.prepare('SELECT id, username, email, role, status, display_name FROM users WHERE approval_token = ?').get(token) as User | undefined
+  const user = database.prepare('SELECT id, username, email, role, status, display_name, avatar_url FROM users WHERE approval_token = ?').get(token) as User | undefined
   if (!user) return null
   database.prepare("UPDATE users SET status = 'active', approval_token = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(user.id)
-  const updated = database.prepare('SELECT id, username, email, role, status, display_name FROM users WHERE id = ?').get(user.id) as User
+  const updated = database.prepare('SELECT id, username, email, role, status, display_name, avatar_url FROM users WHERE id = ?').get(user.id) as User
   return updated
 }
 
@@ -398,7 +401,7 @@ export function setResetTokenForUser(userId: number, token: string, expires: Dat
 
 export function getUserByResetToken(token: string): User | null {
   const database = getDatabase()
-  const row = database.prepare('SELECT id, username, email, role, reset_token, reset_expires, display_name FROM users WHERE reset_token = ?').get(token) as any
+  const row = database.prepare('SELECT id, username, email, role, reset_token, reset_expires, display_name, avatar_url FROM users WHERE reset_token = ?').get(token) as any
   return row ?? null
 }
 
@@ -410,6 +413,11 @@ export function clearResetToken(userId: number): void {
 export function setDisplayName(userId: number, displayName: string): void {
   const database = getDatabase()
   database.prepare('UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(displayName, userId)
+}
+
+export function setAvatarUrl(userId: number, url: string): void {
+  const database = getDatabase()
+  database.prepare('UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(url, userId)
 }
 
 export function listUsers(): { id: number; username: string; display_name: string | null }[] {

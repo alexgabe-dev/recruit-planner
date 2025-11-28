@@ -20,7 +20,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; avatarUrl?: string | null } | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -28,9 +28,17 @@ export function Sidebar() {
         const res = await fetch("/api/auth/me", { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null })
+        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, avatarUrl: data.avatarUrl ?? null })
       } catch {}
     })()
+    const onAvatarUpdated = (e: Event) => {
+      const url = (e as CustomEvent).detail as string
+      setMe((prev) => (prev ? { ...prev, avatarUrl: url } : prev))
+    }
+    window.addEventListener("avatar-updated", onAvatarUpdated as any)
+    return () => {
+      window.removeEventListener("avatar-updated", onAvatarUpdated as any)
+    }
   }, [])
 
   return (
@@ -62,7 +70,7 @@ export function Sidebar() {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <Avatar className="size-8">
-                <AvatarImage src="/placeholder-user.jpg" alt={me?.username ?? "Felhasználó"} />
+                <AvatarImage src={me?.avatarUrl ?? "/placeholder-user.jpg"} alt={me?.username ?? "Felhasználó"} />
                 <AvatarFallback>{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
               </Avatar>
               <span className="font-semibold text-sidebar-foreground">{me?.displayName || me?.username || "Felhasználó"}</span>
