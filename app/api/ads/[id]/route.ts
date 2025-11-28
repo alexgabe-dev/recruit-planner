@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { updateAd, deleteAd } from "@/lib/db"
 import { getSession } from "@/lib/auth"
 import type { Ad } from "@/lib/types"
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {

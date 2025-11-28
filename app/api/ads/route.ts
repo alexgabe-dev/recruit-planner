@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getAllAds, createAd } from "@/lib/db"
 import { getSession } from "@/lib/auth"
 import type { Ad } from "@/lib/types"
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export async function GET(req: Request) {
   try {
