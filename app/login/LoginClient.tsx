@@ -14,6 +14,11 @@ export default function LoginClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showWelcome, setShowWelcome] = useState(false)
+  const [showNameModal, setShowNameModal] = useState(false)
+  const [displayName, setDisplayName] = useState("")
+  const [nameSaving, setNameSaving] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [nameForWelcome, setNameForWelcome] = useState<string>("")
   const approved = params.get('approved') === '1'
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -32,11 +37,49 @@ export default function LoginClient() {
         setLoading(false)
         return
       }
+      const data = await res.json().catch(() => ({ success: true })) as any
       setLoading(false)
-      setShowWelcome(true)
+      if (data?.needsDisplayName) {
+        setShowNameModal(true)
+      } else {
+        try {
+          const me = await fetch('/api/auth/me')
+          const meData = await me.json().catch(() => ({}))
+          setNameForWelcome(meData?.displayName || username)
+        } catch {
+          setNameForWelcome(username)
+        }
+        setShowWelcome(true)
+      }
     } catch {
       setError("Szerver hiba")
       setLoading(false)
+    }
+  }
+
+  const submitDisplayName = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setNameSaving(true)
+    setNameError(null)
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName })
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setNameError((data as any).error || 'Sikertelen mentés')
+        setNameSaving(false)
+        return
+      }
+      setShowNameModal(false)
+      setNameForWelcome(displayName || username)
+      setShowWelcome(true)
+    } catch {
+      setNameError('Szerver hiba')
+    } finally {
+      setNameSaving(false)
     }
   }
 
@@ -45,10 +88,10 @@ export default function LoginClient() {
       {showWelcome && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black animate-in fade-in duration-500">
           <SplitText
-            text={`Szia, ${username}!`}
+            text={`Szia, ${nameForWelcome || username}!`}
             className="text-white text-6xl md:text-8xl font-black tracking-tight text-center"
             delay={80}
-            duration={0.4}
+            duration={0.6}
             ease="power3.out"
             splitType="chars"
             from={{ opacity: 0, y: 40 }}
@@ -60,6 +103,33 @@ export default function LoginClient() {
               setTimeout(() => router.replace("/"), 700)
             }}
           />
+        </div>
+      )}
+      {showNameModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 animate-in fade-in duration-500">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-card/90 p-6">
+            <SplitText
+              text="Hogyan szólíthatunk?"
+              className="text-white text-2xl md:text-3xl font-bold text-center"
+              delay={60}
+              duration={0.5}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 30 }}
+              to={{ opacity: 1, y: 0 }}
+              threshold={0.05}
+              rootMargin="-100px"
+              textAlign="center"
+            />
+            <form onSubmit={submitDisplayName} className="mt-6 space-y-3">
+              <label className="text-xs text-white/80">Keresztnév vagy becenév</label>
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required className="bg-white/95 text-black" />
+              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+              <Button type="submit" disabled={nameSaving} className="w-full transition-transform active:scale-[0.98]">
+                {nameSaving ? 'Mentés…' : 'Mentés'}
+              </Button>
+            </form>
+          </div>
         </div>
       )}
       <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 rounded-lg border border-border p-6 bg-card/80 backdrop-blur animate-in fade-in slide-in-from-bottom-4 duration-500">

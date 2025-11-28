@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       .setExpirationTime("7d")
       .sign(key)
 
-    const res = NextResponse.json({ success: true })
+    const res = NextResponse.json({ success: true, needsDisplayName: !user.display_name })
     res.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
