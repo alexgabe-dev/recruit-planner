@@ -44,7 +44,8 @@ export async function POST(req: Request) {
       const filename = `user-${user.id}-${Date.now()}.${ext}`
       const targetPath = path.join(uploadsDir, filename)
       fs.writeFileSync(targetPath, buffer)
-      avatarUrl = `/uploads/${filename}`
+      const base64 = buffer.toString("base64")
+      avatarUrl = `data:${type || "image/png"};base64,${base64}`
     } catch {
       const base64 = buffer.toString("base64")
       avatarUrl = `data:${type || "image/png"};base64,${base64}`
