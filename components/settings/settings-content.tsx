@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useStore } from "@/lib/db-store"
 import { toast } from "sonner"
-import { Trash2, RotateCcw, Database, Info, KeyRound, User, Camera } from "lucide-react"
+import { Trash2, RotateCcw, Database, Info, KeyRound, User, Camera, Upload } from "lucide-react"
 import { useEffect, useState, useRef } from "react"
 
 export function SettingsContent() {
@@ -30,6 +30,7 @@ export function SettingsContent() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null; avatarUrl?: string | null } | null>(null)
   const [displayName, setDisplayName] = useState("")
   const [savingName, setSavingName] = useState(false)
@@ -43,6 +44,7 @@ export function SettingsContent() {
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
   const [cropEl, setCropEl] = useState<HTMLDivElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const importFileRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -109,6 +111,37 @@ export function SettingsContent() {
       toast.success("Összes adat törölve")
     } catch (e) {
       toast.error("Hiba: nem sikerült törölni az adatokat")
+    }
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setImporting(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await fetch("/api/import", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      
+      if (!res.ok) {
+        toast.error(data.error || "Sikertelen importálás")
+      } else {
+        toast.success(`${data.count} hirdetés sikeresen importálva`)
+        await useStore.getState().loadData()
+      }
+    } catch {
+      toast.error("Hiba történt az importálás során")
+    } finally {
+      setImporting(false)
+      if (importFileRef.current) {
+        importFileRef.current.value = ""
+      }
     }
   }
 
@@ -398,6 +431,25 @@ export function SettingsContent() {
           <CardDescription>Adatok visszaállítása vagy törlése</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start bg-transparent" 
+              onClick={() => importFileRef.current?.click()}
+              disabled={importing}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {importing ? "Importálás..." : "Adatok importálása Excelből"}
+            </Button>
+            <input
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              ref={importFileRef}
+              onChange={handleImport}
+            />
+            <p className="text-xs text-muted-foreground">Új partnerek és hirdetések betöltése</p>
+          </div>
           <div className="space-y-2">
             <Button variant="outline" className="w-full justify-start bg-transparent" onClick={handleResetData}>
               <RotateCcw className="mr-2 h-4 w-4" />

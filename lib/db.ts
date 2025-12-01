@@ -183,23 +183,25 @@ export function createPartner(partner: Omit<Partner, 'id'>, userId: number): Par
   }
 }
 
-export function updatePartner(id: number, partner: Partial<Omit<Partner, 'id'>>): Partner | null {
+export function updatePartner(id: number, partner: Partial<Omit<Partner, 'id'>>, userId: number): Partner | null {
   const database = getDatabase()
   const fields = Object.keys(partner).map(key => `${key} = ?`).join(', ')
   const values = Object.values(partner)
   
   const stmt = database.prepare(`
-    UPDATE partners SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    UPDATE partners SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
   `)
-  stmt.run(...values, id)
+  const result = stmt.run(...values, id, userId)
+  
+  if (result.changes === 0) return null
   
   return getPartnerById(id)
 }
 
-export function deletePartner(id: number): boolean {
+export function deletePartner(id: number, userId: number): boolean {
   const database = getDatabase()
-  const stmt = database.prepare('DELETE FROM partners WHERE id = ?')
-  const result = stmt.run(id)
+  const stmt = database.prepare('DELETE FROM partners WHERE id = ? AND user_id = ?')
+  const result = stmt.run(id, userId)
   return result.changes > 0
 }
 
