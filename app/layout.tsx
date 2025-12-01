@@ -9,8 +9,22 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "recruit-planner",
-  description: "Manage marketing campaings or else."
+  title: "Hírdetéskezelő",
+  description: "Manage marketing campaings or else.",
+  icons: {
+    icon: [
+      { url: "/favicons/favicon.ico", sizes: "any" },
+      { url: "/favicons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/favicons/apple-touch-icon.png" },
+    ],
+    other: [
+      { rel: "manifest", url: "/favicons/site.webmanifest" }
+    ]
+  },
+  manifest: "/favicons/site.webmanifest"
 }
 
 export const viewport: Viewport = {
