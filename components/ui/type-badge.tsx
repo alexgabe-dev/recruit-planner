@@ -14,8 +14,9 @@ export function TypeBadge({ type, className }: TypeBadgeProps) {
       className={cn(
         "font-medium capitalize",
         type === "kampány" && "border-[oklch(0.7_0.15_160)] text-[oklch(0.7_0.15_160)]",
-        type === "post" && "border-[oklch(0.65_0.18_250)] text-[oklch(0.65_0.18_250)]",
+        type === "post" && "border-[oklch(0.65_0.2_300)] text-[oklch(0.65_0.2_300)]",
         type === "kiemelt post" && "border-[oklch(0.75_0.15_45)] text-[oklch(0.75_0.15_45)]",
+        type === "Profession" && "border-[oklch(0.65_0.18_250)] text-[oklch(0.65_0.18_250)]",
         className,
       )}
     >

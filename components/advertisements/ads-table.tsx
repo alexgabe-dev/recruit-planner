@@ -88,7 +88,7 @@ export function AdsTable() {
   // Get unique values for filters
   const offices = useMemo(() => [...new Set(partners.map((p) => p.office))].sort(), [partners])
   const partnerNames = useMemo(() => [...new Set(partners.map((p) => p.name))].sort(), [partners])
-  const adTypes: Ad["type"][] = ["kampány", "post", "kiemelt post"]
+  const adTypes: Ad["type"][] = ["kampány", "post", "kiemelt post", "Profession"]
   const statuses: AdStatus[] = ["Aktív", "Időzített", "Lejárt"]
 
   // Apply custom filters

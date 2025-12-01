@@ -39,7 +39,8 @@ export async function POST(request: Request) {
     }
     const created = createAd(payload, session.userId)
     return NextResponse.json(created, { status: 201 })
-  } catch {
+  } catch (e) {
+    console.error("Error creating ad:", e)
     return NextResponse.json({ error: "Failed to create ad" }, { status: 500 })
   }
 }

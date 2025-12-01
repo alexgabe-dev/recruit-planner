@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 const formSchema = z.object({
   positionName: z.string().min(1, "Kötelező mező"),
   adContent: z.string().min(1, "Kötelező mező"),
-  type: z.enum(["kampány", "post", "kiemelt post"]),
+  type: z.enum(["kampány", "post", "kiemelt post", "Profession"]),
   partnerId: z.number().min(1, "Válasszon partnert"),
   startDate: z.date(),
   endDate: z.date(),
@@ -190,6 +190,7 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
                       <SelectItem value="kampány">Kampány</SelectItem>
                       <SelectItem value="post">Post</SelectItem>
                       <SelectItem value="kiemelt post">Kiemelt post</SelectItem>
+                      <SelectItem value="Profession">Profession</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

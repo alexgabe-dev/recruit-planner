@@ -10,7 +10,7 @@ export interface Ad {
   id: number
   positionName: string
   adContent: string
-  type: "kampány" | "post" | "kiemelt post"
+  type: "kampány" | "post" | "kiemelt post" | "Profession"
   startDate: Date
   endDate: Date
   isActive: boolean

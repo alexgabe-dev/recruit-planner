@@ -52,7 +52,7 @@ export function initializeDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       position_name TEXT NOT NULL,
       ad_content TEXT NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('kampány', 'post', 'kiemelt post')),
+      type TEXT NOT NULL CHECK(type IN ('kampány', 'post', 'kiemelt post', 'Profession')),
       start_date DATETIME NOT NULL,
       end_date DATETIME NOT NULL,
       is_active BOOLEAN DEFAULT 1,
@@ -114,6 +114,47 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_partners_user_id ON partners(user_id);
     CREATE INDEX IF NOT EXISTS idx_ads_user_id ON ads(user_id);
   `)
+
+  // Migration for 'Profession' type in ads table
+  const adsTableDef = database.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='ads'").get() as { sql: string }
+  if (adsTableDef && !adsTableDef.sql.includes("'Profession'")) {
+    console.log('Migrating ads table to include Profession type...')
+    const transaction = database.transaction(() => {
+      database.exec("ALTER TABLE ads RENAME TO ads_old")
+      database.exec(`
+        CREATE TABLE ads (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          position_name TEXT NOT NULL,
+          ad_content TEXT NOT NULL,
+          type TEXT NOT NULL CHECK(type IN ('kampány', 'post', 'kiemelt post', 'Profession')),
+          start_date DATETIME NOT NULL,
+          end_date DATETIME NOT NULL,
+          is_active BOOLEAN DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          partner_id INTEGER NOT NULL,
+          user_id INTEGER,
+          FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `)
+      // We use explicit columns to ensure safety even if column order differed
+      database.exec(`
+        INSERT INTO ads (id, position_name, ad_content, type, start_date, end_date, is_active, created_at, updated_at, partner_id, user_id)
+        SELECT id, position_name, ad_content, type, start_date, end_date, is_active, created_at, updated_at, partner_id, user_id 
+        FROM ads_old
+      `)
+      database.exec("DROP TABLE ads_old")
+      
+      // Recreate indexes
+      database.exec("CREATE INDEX IF NOT EXISTS idx_ads_partner_id ON ads(partner_id)")
+      database.exec("CREATE INDEX IF NOT EXISTS idx_ads_dates ON ads(start_date, end_date)")
+      database.exec("CREATE INDEX IF NOT EXISTS idx_ads_active ON ads(is_active)")
+      database.exec("CREATE INDEX IF NOT EXISTS idx_ads_user_id ON ads(user_id)")
+    })
+    transaction()
+    console.log('Ads table migration completed.')
+  }
 }
 
 // Partner operations
