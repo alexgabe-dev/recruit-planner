@@ -8,7 +8,13 @@ export async function GET(req: Request) {
     if (!session) return NextResponse.json({ error: 'Nincs bejelentkezve' }, { status: 401 })
     const url = new URL(req.url)
     const userParam = url.searchParams.get('userId')
-    const targetUserId = session.role === 'viewer' ? (userParam ? Number(userParam) || session.userId : undefined) : session.userId
+    
+    // Admins and viewers see global stats by default (undefined userId), unless they filter
+    // Users see only their own stats
+    const targetUserId = (session.role === 'admin' || session.role === 'viewer') 
+      ? (userParam ? Number(userParam) : undefined) 
+      : session.userId
+      
     const stats = getDashboardStats(targetUserId)
     return NextResponse.json(stats)
   } catch {

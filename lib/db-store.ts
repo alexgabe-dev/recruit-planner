@@ -160,19 +160,8 @@ export function useLoadData() {
   useEffect(() => {
     ;(async () => {
       try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' })
-        if (res.ok) {
-          const me = await res.json()
-          if (me.role === 'viewer') {
-            const last = typeof window !== 'undefined' ? window.localStorage.getItem('viewerLastUserId') : null
-            const id = last ? Number(last) : undefined
-            await loadData(id)
-          } else {
-            await loadData()
-          }
-        } else {
-          await loadData()
-        }
+        // Always load global data
+        await loadData()
       } finally {
         setIsLoading(false)
       }

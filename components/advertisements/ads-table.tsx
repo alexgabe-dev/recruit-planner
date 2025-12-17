@@ -220,8 +220,43 @@ export function AdsTable() {
     },
     {
       accessorKey: "status",
-      header: "Státusz",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2 text-xs"
+        >
+          Státusz
+          <ArrowUpDown className="ml-1 h-3 w-3" />
+        </Button>
+      ),
       cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+      sortingFn: (rowA, rowB, columnId) => {
+        const statusA = rowA.getValue(columnId) as string
+        const statusB = rowB.getValue(columnId) as string
+        
+        // Priority: Aktív (0) > Időzített (1) > Lejárt (2)
+        const getPriority = (s: string) => {
+          if (s === "Aktív") return 0
+          if (s === "Időzített") return 1
+          if (s === "Lejárt") return 2
+          return 3
+        }
+
+        const priorityA = getPriority(statusA)
+        const priorityB = getPriority(statusB)
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB
+        }
+
+        // Secondary sort: End Date Descending (Latest first)
+        // Note: This secondary sort direction will flip if the column sort is toggled to DESC
+        const dateA = new Date(rowA.original.endDate).getTime()
+        const dateB = new Date(rowB.original.endDate).getTime()
+        
+        return dateB - dateA
+      },
     },
     {
       id: "actions",

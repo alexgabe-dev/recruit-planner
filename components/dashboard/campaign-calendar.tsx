@@ -2,14 +2,20 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore } from "@/lib/db-store"
-import { getAdStatus } from "@/lib/types"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { getAdStatus, type Ad, type Partner, type AdStatus } from "@/lib/types"
+import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useMemo } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+
+type AdWithDetails = Ad & { partner?: Partner; status: AdStatus }
 
 export function CampaignCalendar() {
   const { ads, partners } = useStore()
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
   const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
@@ -43,14 +49,22 @@ export function CampaignCalendar() {
 
   const getAdsForDay = (day: number) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-    return adsInMonth.filter((ad) => {
+    date.setHours(0, 0, 0, 0)
+
+    return adsInMonth.reduce<Array<AdWithDetails & { isStart: boolean }>>((acc, ad) => {
       const start = new Date(ad.startDate)
       const end = new Date(ad.endDate)
       start.setHours(0, 0, 0, 0)
       end.setHours(0, 0, 0, 0)
-      date.setHours(0, 0, 0, 0)
-      return date >= start && date <= end
-    })
+      
+      const isStart = date.getTime() === start.getTime()
+      const isEnd = date.getTime() === end.getTime()
+
+      if (isStart || isEnd) {
+        acc.push({ ...ad, isStart })
+      }
+      return acc
+    }, [])
   }
 
   const prevMonth = () => {
@@ -84,7 +98,35 @@ export function CampaignCalendar() {
     currentDate.getMonth() === today.getMonth() &&
     currentDate.getFullYear() === today.getFullYear()
 
+  const handleDayClick = (day: number) => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+    setSelectedDate(date)
+  }
+
+  const selectedDayAds = useMemo(() => {
+    if (!selectedDate) return []
+    const day = selectedDate.getDate()
+    // Ensure we are looking at the right month if selectedDate is from current view
+    // But simplistic check: filter all ads for this specific date timestamp
+    return ads
+        .map(ad => ({
+            ...ad,
+            partner: partners.find(p => p.id === ad.partnerId),
+            status: getAdStatus(ad)
+        }))
+        .filter(ad => {
+            const start = new Date(ad.startDate)
+            const end = new Date(ad.endDate)
+            start.setHours(0, 0, 0, 0)
+            end.setHours(0, 0, 0, 0)
+            const current = new Date(selectedDate)
+            current.setHours(0, 0, 0, 0)
+            return current >= start && current <= end
+        })
+  }, [selectedDate, ads, partners])
+
   return (
+    <>
     <Card className="border-border bg-card">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold text-foreground">Kampány naptár</CardTitle>
@@ -112,24 +154,47 @@ export function CampaignCalendar() {
             return (
               <div
                 key={i}
-                className={`min-h-[80px] rounded-lg border p-1 ${
+                onClick={() => day && handleDayClick(day)}
+                className={`min-h-[80px] sm:min-h-[100px] cursor-pointer rounded-lg border p-1 transition-all hover:shadow-md ${
                   day
                     ? isToday(day)
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-background"
+                      ? "border-primary/50 bg-primary/5 shadow-sm"
+                      : "border-border bg-card hover:bg-muted/50"
                     : "border-transparent"
                 }`}
               >
                 {day && (
                   <>
-                    <div className={`text-xs font-medium ${isToday(day) ? "text-primary" : "text-foreground"}`}>
-                      {day}
+                    <div className="mb-1 flex justify-center sm:justify-start">
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                          isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                        }`}
+                      >
+                        {day}
+                      </span>
                     </div>
-                    <div className="mt-1 space-y-0.5">
-                      {dayAds.slice(0, 2).map((ad) => (
+                    {/* Mobile View: Dots */}
+                    <div className="flex flex-wrap justify-center gap-1 sm:hidden">
+                      {dayAds.map((ad) => (
                         <div
                           key={ad.id}
-                          className={`truncate rounded px-1 py-0.5 text-[10px] font-medium ${
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            ad.type === "kampány"
+                              ? "bg-[oklch(0.7_0.15_160)]"
+                              : ad.type === "post"
+                                ? "bg-[oklch(0.65_0.18_250)]"
+                                : "bg-[oklch(0.75_0.15_45)]"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {/* Desktop View: Text badges */}
+                    <div className="hidden space-y-1 sm:block">
+                      {dayAds.slice(0, 3).map((ad) => (
+                        <div
+                          key={ad.id}
+                          className={`truncate rounded px-1.5 py-0.5 text-[10px] font-medium shadow-sm ${
                             ad.type === "kampány"
                               ? "bg-[oklch(0.7_0.15_160/0.2)] text-[oklch(0.7_0.15_160)]"
                               : ad.type === "post"
@@ -141,8 +206,10 @@ export function CampaignCalendar() {
                           {ad.positionName}
                         </div>
                       ))}
-                      {dayAds.length > 2 && (
-                        <div className="text-[10px] text-muted-foreground">+{dayAds.length - 2} más</div>
+                      {dayAds.length > 3 && (
+                        <div className="pl-1 text-[10px] font-medium text-muted-foreground">
+                          +{dayAds.length - 3} további
+                        </div>
                       )}
                     </div>
                   </>
@@ -169,5 +236,60 @@ export function CampaignCalendar() {
         </div>
       </CardContent>
     </Card>
+
+    <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
+        <DialogContent className="max-h-[80vh] max-w-lg overflow-hidden flex flex-col">
+            <DialogHeader>
+                <DialogTitle>
+                    {selectedDate && selectedDate.toLocaleDateString("hu-HU", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        weekday: "long"
+                    })}
+                </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto pr-2">
+                {selectedDayAds.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                        Nincs aktív hirdetés ezen a napon.
+                    </div>
+                ) : (
+                    <div className="space-y-3 pt-2">
+                        {selectedDayAds.map(ad => (
+                            <div key={ad.id} className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                                <div className="mb-2 flex items-start justify-between gap-2">
+                                    <h4 className="font-semibold text-foreground">{ad.positionName}</h4>
+                                    <Badge variant="outline" className={
+                                        ad.type === "kampány"
+                                        ? "border-[oklch(0.7_0.15_160)] text-[oklch(0.7_0.15_160)]"
+                                        : ad.type === "post"
+                                            ? "border-[oklch(0.65_0.18_250)] text-[oklch(0.65_0.18_250)]"
+                                            : "border-[oklch(0.75_0.15_45)] text-[oklch(0.75_0.15_45)]"
+                                    }>
+                                        {ad.type}
+                                    </Badge>
+                                </div>
+                                <div className="space-y-1 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-foreground">Partner:</span>
+                                        {ad.partner?.name} ({ad.partner?.office})
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-foreground">Időszak:</span>
+                                        {new Date(ad.startDate).toLocaleDateString("hu-HU")} - {new Date(ad.endDate).toLocaleDateString("hu-HU")}
+                                    </div>
+                                    <div className="mt-2 text-xs">
+                                        {ad.adContent.substring(0, 100)}...
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </DialogContent>
+    </Dialog>
+    </>
   )
 }
