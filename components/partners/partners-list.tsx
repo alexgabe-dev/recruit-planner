@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function PartnersList() {
   const { partners, ads } = useStore()
   const [role, setRole] = useState<string | null>(null)
+  const [me, setMe] = useState<any>(null)
   const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -33,10 +34,11 @@ export function PartnersList() {
   useEffect(() => {
     ;(async () => {
       try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' })
+        const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: 'no-store' })
         if (!res.ok) return
         const data = await res.json()
         setMe(data)
+        setRole(data.role)
         if (data.role === 'viewer') {
           // ... existing logic for viewer if needed, or remove
         }
@@ -211,7 +213,7 @@ export function PartnersList() {
                       <TableCell>
                         {(() => {
                           const isVisitor = me?.role === 'visitor' || me?.role === 'viewer'
-                          const canEdit = me?.role === 'admin' || (!isVisitor && partner.userId === me?.id)
+                          const canEdit = me?.role === 'admin' || me?.role === 'user'
                           const canDelete = me?.role === 'admin'
 
                           if (!canEdit && !canDelete) return null
