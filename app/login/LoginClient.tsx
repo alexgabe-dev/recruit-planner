@@ -4,7 +4,9 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import SplitText from "@/components/SplitText"
+import { User, Lock, LogIn, Loader2 } from "lucide-react"
 
 export default function LoginClient() {
   const router = useRouter()
@@ -98,73 +100,140 @@ export default function LoginClient() {
             text={`Szia, ${nameForWelcome || username}!`}
             className="text-white text-6xl md:text-8xl font-black tracking-tight text-center"
             delay={80}
-            duration={0.3}
-            ease="power3.out"
-            splitType="chars"
-            from={{ opacity: 0, y: 40 }}
-            to={{ opacity: 1, y: 0 }}
-            threshold={0.05}
-            rootMargin="-100px"
-            textAlign="center"
-          onLetterAnimationComplete={() => {
-              setTimeout(() => router.replace(redirectTo), 700)
+            onLetterAnimationComplete={() => {
+              setTimeout(() => {
+                router.push(redirectTo)
+              }, 500)
             }}
           />
         </div>
       )}
+
       {showNameModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black animate-in fade-in duration-500">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-neutral-900/95 text-white p-6 shadow-lg">
-            <SplitText
-              text="Hogyan szólíthatunk?"
-              className="text-white text-2xl md:text-3xl font-bold text-center"
-              delay={60}
-              duration={0.5}
-              ease="power3.out"
-              splitType="chars"
-              from={{ opacity: 0, y: 30 }}
-              to={{ opacity: 1, y: 0 }}
-              threshold={0.05}
-              rootMargin="-100px"
-              textAlign="center"
-            />
-            <form onSubmit={submitDisplayName} className="mt-6 space-y-3">
-              <label className="text-xs text-white/80">Keresztnév vagy becenév</label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                autoFocus
-                className="bg-neutral-800 text-white placeholder:text-neutral-400 border-neutral-700 focus-visible:ring-white/50 focus-visible:border-white shadow-sm"
-              />
-              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-              <Button type="submit" disabled={nameSaving} className="w-full transition-transform active:scale-[0.98]">
-                {nameSaving ? 'Mentés…' : 'Mentés'}
-              </Button>
-            </form>
-          </div>
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md border-border bg-card shadow-2xl animate-in zoom-in-95 duration-300">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Hogy szólíthatunk?</CardTitle>
+              <CardDescription>Kérjük, add meg a teljes neved a folytatáshoz</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={submitDisplayName} className="space-y-4">
+                {nameError && (
+                  <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive text-center font-medium">
+                    {nameError}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Teljes név</label>
+                  <Input 
+                    value={displayName} 
+                    onChange={(e) => setDisplayName(e.target.value)} 
+                    required 
+                    placeholder="Pl. Kovács János"
+                    className="focus-visible:ring-primary"
+                    autoFocus
+                  />
+                </div>
+                <Button className="w-full" disabled={nameSaving} type="submit">
+                  {nameSaving ? "Mentés..." : "Tovább"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       )}
-      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 rounded-lg border border-border p-6 bg-card/80 backdrop-blur animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h1 className="text-xl font-semibold">Bejelentkezés</h1>
-      {approved && <p className="text-xs text-[oklch(0.7_0.18_145)]">Fiók jóváhagyva. Jelentkezz be.</p>}
-      <div className="space-y-2">
-        <label className="text-sm">Felhasználónév</label>
-        <Input value={username} onChange={(e) => setUsername(e.target.value)} required className="transition-colors focus:shadow-sm" />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm">Jelszó</label>
-        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="transition-colors focus:shadow-sm" />
-      </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={loading} className="w-full transition-transform active:scale-[0.98]">
-        {loading ? "Belépés..." : "Belépés"}
-      </Button>
-      <div className="flex items-center justify-between text-xs">
-        <button type="button" className="text-muted-foreground hover:underline transition-opacity active:opacity-80" onClick={() => router.push('/forgot-password')}>Elfelejtetted a jelszót?</button>
-        <button type="button" className="text-muted-foreground hover:underline transition-opacity active:opacity-80" onClick={() => router.push('/register')}>Regisztráció</button>
-      </div>
-      </form>
+
+      <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <CardHeader className="space-y-1 text-center pb-2">
+          <CardTitle className="text-2xl font-bold tracking-tight">Bejelentkezés</CardTitle>
+          <CardDescription>
+            {approved ? "A fiókod jóváhagyva! Jelentkezz be." : "Add meg az adataidat a belépéshez"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <form onSubmit={onSubmit} className="space-y-5">
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive text-center font-medium animate-in fade-in slide-in-from-top-2">
+                {error}
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Felhasználónév</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    value={username} 
+                    onChange={(e) => setUsername(e.target.value)} 
+                    required 
+                    className="pl-9 transition-all focus:ring-2 focus:ring-primary/20" 
+                    placeholder="Felhasználónév"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Jelszó</label>
+                  <Button 
+                    variant="link" 
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-primary" 
+                    type="button"
+                    onClick={() => router.push("/forgot-password")}
+                  >
+                    Elfelejtett jelszó?
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    required 
+                    className="pl-9 transition-all focus:ring-2 focus:ring-primary/20" 
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <Button 
+                className="w-full transition-all active:scale-[0.98] font-semibold" 
+                disabled={loading} 
+                type="submit"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Belépés...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Bejelentkezés
+                  </>
+                )}
+              </Button>
+              
+              <div className="text-center text-sm text-muted-foreground pt-2">
+                Nincs még fiókod?{" "}
+                <Button 
+                  variant="link" 
+                  className="h-auto p-0 font-semibold text-primary hover:underline" 
+                  type="button"
+                  onClick={() => router.push("/register")}
+                >
+                  Regisztrálj itt
+                </Button>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
