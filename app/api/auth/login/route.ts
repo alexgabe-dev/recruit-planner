@@ -30,9 +30,10 @@ export async function POST(req: Request) {
 
     const secret = process.env.AUTH_SECRET
     if (!secret) {
+      console.error("CRITICAL ERROR: AUTH_SECRET is not defined in environment variables!")
       // Fallback only for development; ensure AUTH_SECRET is set in production
       if (process.env.NODE_ENV === "production") {
-        return NextResponse.json({ error: "Szerver hiba" }, { status: 500 })
+        return NextResponse.json({ error: "Szerver konfigurációs hiba (AUTH_SECRET)" }, { status: 500 })
       }
     }
 
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
     })
     return res
   } catch (err) {
+    console.error("Login error:", err)
     return NextResponse.json({ error: "Szerver hiba" }, { status: 500 })
   }
 }
