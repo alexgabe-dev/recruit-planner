@@ -38,7 +38,7 @@ export async function sendMail({ to, subject, html }: MailOptions) {
 
 export function approvalEmail({ username, email, approveUrl }: { username: string; email: string; approveUrl: string }) {
   return {
-    to: process.env.ADMIN_EMAIL || 'gabor.sandor@vitizor.hu',
+    to: process.env.ADMIN_EMAIL || 'gabor.sandor@vizizor.hu',
     subject: 'Új regisztráció jóváhagyása',
     html: `
       <div style="font-family:Inter,system-ui,sans-serif">
