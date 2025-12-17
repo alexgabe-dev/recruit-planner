@@ -48,7 +48,7 @@ function generateEmailHtml({ title, content, buttonText, buttonUrl }: { title: s
   <div style="${styles.container}">
     <!-- Header -->
     <div style="${styles.header}">
-      <a href="${appUrl}" style="${styles.headerText}">Recruit Planner</a>
+      <a href="${appUrl}" style="${styles.headerText}">Hírdetés Rendszerző</a>
     </div>
 
     <!-- Content -->
@@ -72,7 +72,7 @@ function generateEmailHtml({ title, content, buttonText, buttonUrl }: { title: s
 
     <!-- Footer -->
     <div style="${styles.footer}">
-      <p style="margin: 0;">© ${new Date().getFullYear()} Recruit Planner. Minden jog fenntartva.</p>
+      <p style="margin: 0;">© ${new Date().getFullYear()} Készítette Gábor Sándor. Minden jog fenntartva.</p>
       <p style="margin: 8px 0 0;">Ez egy automatikus üzenet, kérjük ne válaszolj rá.</p>
     </div>
   </div>
