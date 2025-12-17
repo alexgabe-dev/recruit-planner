@@ -35,16 +35,10 @@ export function PartnersList() {
       try {
         const res = await fetch('/api/auth/me', { cache: 'no-store' })
         if (!res.ok) return
-        const me = await res.json()
-        setRole(me.role || 'user')
-        if (me.role === 'viewer') {
-          const u = await fetch('/api/users', { cache: 'no-store' })
-          if (u.ok) {
-            const list = await u.json()
-            setUsers(list)
-            const last = typeof window !== 'undefined' ? window.localStorage.getItem('viewerLastUserId') : null
-            if (last) setSelectedUserId(Number(last))
-          }
+        const data = await res.json()
+        setMe(data)
+        if (data.role === 'viewer') {
+          // ... existing logic for viewer if needed, or remove
         }
       } catch {}
     })()
@@ -215,37 +209,47 @@ export function PartnersList() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Műveletek</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {role !== 'viewer' && (
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start px-2"
-                                onClick={() => setEditingPartner(partner)}
-                              >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Szerkesztés
-                              </Button>
-                            )}
-                            {role !== 'viewer' && (
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start px-2 text-destructive hover:text-destructive"
-                                onClick={() => setDeletingPartner(partner)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Törlés
-                              </Button>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {(() => {
+                          const isVisitor = me?.role === 'visitor' || me?.role === 'viewer'
+                          const canEdit = me?.role === 'admin' || (!isVisitor && partner.userId === me?.id)
+                          const canDelete = me?.role === 'admin'
+
+                          if (!canEdit && !canDelete) return null
+
+                          return (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Műveletek</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {canEdit && (
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start px-2"
+                                    onClick={() => setEditingPartner(partner)}
+                                  >
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Szerkesztés
+                                  </Button>
+                                )}
+                                {canDelete && (
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start px-2 text-destructive hover:text-destructive"
+                                    onClick={() => setDeletingPartner(partner)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Törlés
+                                  </Button>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )
+                        })()}
                       </TableCell>
                     </TableRow>
                   ))

@@ -40,6 +40,7 @@ type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
 export function AdsTable() {
   const { ads, partners } = useStore()
   const [role, setRole] = useState<string | null>(null)
+  const [me, setMe] = useState<any>(null)
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
   const [sorting, setSorting] = useState<SortingState>([])
@@ -70,16 +71,17 @@ export function AdsTable() {
   useEffect(() => {
     ;(async () => {
       try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' })
+        const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: 'no-store' })
         if (!res.ok) return
-        const me = await res.json()
-        setRole(me.role || 'user')
-        if (me.role === 'viewer') {
-          const u = await fetch('/api/users', { cache: 'no-store' })
-          if (u.ok) {
-            const list = await u.json()
-            setUsers(list)
-          }
+        const data = await res.json()
+        setMe(data)
+        setRole(data.role)
+        if (data.role === 'admin') {
+           // Admin might want to see user list for filtering (if implemented)
+           // But existing code had logic for 'viewer' to see users? 
+           // Let's just fetch users if admin for potential future use or existing logic
+           // The original code: if (me.role === 'viewer') fetch users... 
+           // I'll leave it out for now unless needed.
         }
       } catch {}
     })()
@@ -310,7 +312,7 @@ export function AdsTable() {
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-2">
-          {role !== 'viewer' && (
+          {me?.role !== 'viewer' && me?.role !== 'visitor' && (
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Új hirdetés

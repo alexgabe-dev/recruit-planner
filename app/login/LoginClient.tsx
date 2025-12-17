@@ -80,7 +80,7 @@ export default function LoginClient() {
       setShowNameModal(false)
       setNameForWelcome(displayName || username)
       try {
-        const me = await fetch('/api/auth/me')
+        const me = await fetch(`/api/auth/me?t=${Date.now()}`)
         const meData = await me.json().catch(() => ({}))
         if (meData?.role === 'viewer') setRedirectTo('/advertisements')
       } catch {}

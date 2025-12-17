@@ -4,6 +4,7 @@ export interface Partner {
   id: number
   name: string
   office: string
+  userId?: number
 }
 
 export interface Ad {
@@ -16,6 +17,7 @@ export interface Ad {
   isActive: boolean
   createdAt: Date
   partnerId: number
+  userId?: number
   partner?: Partner
 }
 

@@ -49,7 +49,7 @@ export function SettingsContent() {
   useEffect(() => {
     ;(async () => {
       try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" })
+        const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
         setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, role: data.role ?? null, avatarUrl: data.avatarUrl ?? null })

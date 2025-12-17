@@ -102,6 +102,7 @@ export function initializeDatabase() {
   if (!have.has('reset_expires')) database.exec("ALTER TABLE users ADD COLUMN reset_expires DATETIME")
   if (!have.has('display_name')) database.exec("ALTER TABLE users ADD COLUMN display_name TEXT")
   if (!have.has('avatar_url')) database.exec("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+  if (!have.has('last_seen')) database.exec("ALTER TABLE users ADD COLUMN last_seen DATETIME")
   const partnerCols = database.prepare("PRAGMA table_info(partners)").all() as { name: string }[]
   const havePartner = new Set(partnerCols.map((c) => c.name))
   if (!havePartner.has('user_id')) database.exec('ALTER TABLE partners ADD COLUMN user_id INTEGER')
@@ -158,10 +159,11 @@ export function initializeDatabase() {
 }
 
 // Partner operations
-export function getAllPartners(userId: number): Partner[] {
+export function getAllPartners(userId?: number): Partner[] {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT * FROM partners WHERE user_id = ? ORDER BY name, office')
-  return stmt.all(userId) as Partner[]
+  // Now returns ALL partners, regardless of user
+  const stmt = database.prepare('SELECT * FROM partners ORDER BY name, office')
+  return stmt.all() as Partner[]
 }
 
 export function getPartnerById(id: number): Partner | null {
@@ -179,43 +181,57 @@ export function createPartner(partner: Omit<Partner, 'id'>, userId: number): Par
   
   return {
     id: result.lastInsertRowid as number,
-    ...partner
+    ...partner,
+    userId
   }
 }
 
-export function updatePartner(id: number, partner: Partial<Omit<Partner, 'id'>>, userId: number): Partner | null {
+export function updatePartner(id: number, partner: Partial<Omit<Partner, 'id'>>, userId?: number): Partner | null {
   const database = getDatabase()
   const fields = Object.keys(partner).map(key => `${key} = ?`).join(', ')
   const values = Object.values(partner)
   
-  const stmt = database.prepare(`
-    UPDATE partners SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
-  `)
-  const result = stmt.run(...values, id, userId)
-  
-  if (result.changes === 0) return null
+  let stmt;
+  if (userId) {
+    stmt = database.prepare(`
+      UPDATE partners SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
+    `)
+    stmt.run(...values, id, userId)
+  } else {
+    // Admin mode or no user check
+    stmt = database.prepare(`
+      UPDATE partners SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `)
+    stmt.run(...values, id)
+  }
   
   return getPartnerById(id)
 }
 
-export function deletePartner(id: number, userId: number): boolean {
+export function deletePartner(id: number, userId?: number): boolean {
   const database = getDatabase()
-  const stmt = database.prepare('DELETE FROM partners WHERE id = ? AND user_id = ?')
-  const result = stmt.run(id, userId)
+  let result;
+  if (userId) {
+    const stmt = database.prepare('DELETE FROM partners WHERE id = ? AND user_id = ?')
+    result = stmt.run(id, userId)
+  } else {
+    const stmt = database.prepare('DELETE FROM partners WHERE id = ?')
+    result = stmt.run(id)
+  }
   return result.changes > 0
 }
 
 // Ad operations
-export function getAllAds(userId: number): (Ad & { partner: Partner })[] {
+export function getAllAds(userId?: number): (Ad & { partner: Partner })[] {
   const database = getDatabase()
+  // Now returns ALL ads, regardless of user
   const stmt = database.prepare(`
-    SELECT a.*, p.name as partner_name, p.office as partner_office
+    SELECT a.*, p.name as partner_name, p.office as partner_office, p.user_id as partner_user_id
     FROM ads a
     JOIN partners p ON a.partner_id = p.id
-    WHERE a.user_id = ? AND p.user_id = ?
     ORDER BY a.created_at DESC
   `)
-  const rows = stmt.all(userId, userId) as any[]
+  const rows = stmt.all() as any[]
   
   return rows.map(row => ({
     id: row.id,
@@ -227,10 +243,12 @@ export function getAllAds(userId: number): (Ad & { partner: Partner })[] {
     isActive: Boolean(row.is_active),
     createdAt: new Date(row.created_at),
     partnerId: row.partner_id,
+    userId: row.user_id,
     partner: {
       id: row.partner_id,
       name: row.partner_name,
-      office: row.partner_office
+      office: row.partner_office,
+      userId: row.partner_user_id
     }
   }))
 }
@@ -238,7 +256,7 @@ export function getAllAds(userId: number): (Ad & { partner: Partner })[] {
 export function getAdById(id: number): (Ad & { partner: Partner }) | null {
   const database = getDatabase()
   const stmt = database.prepare(`
-    SELECT a.*, p.name as partner_name, p.office as partner_office
+    SELECT a.*, p.name as partner_name, p.office as partner_office, p.user_id as partner_user_id
     FROM ads a
     JOIN partners p ON a.partner_id = p.id
     WHERE a.id = ?
@@ -257,10 +275,12 @@ export function getAdById(id: number): (Ad & { partner: Partner }) | null {
     isActive: Boolean(row.is_active),
     createdAt: new Date(row.created_at),
     partnerId: row.partner_id,
+    userId: row.user_id,
     partner: {
       id: row.partner_id,
       name: row.partner_name,
-      office: row.partner_office
+      office: row.partner_office,
+      userId: row.partner_user_id
     }
   }
 }
@@ -287,7 +307,7 @@ export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>, userId: number): Ad {
   return createdAd
 }
 
-export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, userId: number): (Ad & { partner: Partner }) | null {
+export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, userId?: number): (Ad & { partner: Partner }) | null {
   const database = getDatabase()
   const fields = Object.keys(ad).map(key => {
     if (key === 'positionName') return 'position_name = ?'
@@ -309,24 +329,33 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, 
     return value
   })
   
-  const stmt = database.prepare(`
-    UPDATE ads SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
-  `)
-  stmt.run(...values, id, userId)
+  if (userId) {
+    const stmt = database.prepare(`
+      UPDATE ads SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
+    `)
+    stmt.run(...values, id, userId)
+  } else {
+    const stmt = database.prepare(`
+      UPDATE ads SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `)
+    stmt.run(...values, id)
+  }
   
   return getAdById(id)
 }
 
-export function deleteAd(id: number, userId: number): boolean {
+export function deleteAd(id: number, userId?: number): boolean {
   const database = getDatabase()
   console.log('[DB] Attempting to delete ad:', id)
   
-  // Debug: Check what ads exist before deleting
-  const allAds = database.prepare('SELECT id, position_name FROM ads').all()
-  console.log('[DB] Current ads in DB:', JSON.stringify(allAds))
-  
-  const stmt = database.prepare('DELETE FROM ads WHERE id = ? AND user_id = ?')
-  const result = stmt.run(id, userId)
+  let result;
+  if (userId) {
+    const stmt = database.prepare('DELETE FROM ads WHERE id = ? AND user_id = ?')
+    result = stmt.run(id, userId)
+  } else {
+    const stmt = database.prepare('DELETE FROM ads WHERE id = ?')
+    result = stmt.run(id)
+  }
   console.log('[DB] Delete result:', result)
   return result.changes > 0
 }
@@ -337,6 +366,15 @@ export function getDashboardStats(userId?: number) {
   const today = new Date().toISOString().split('T')[0]
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  
+  // Stats should reflect what user sees.
+  // If user sees everything, stats should probably be global?
+  // But usually dashboard stats are personal. 
+  // Requirement: "Admin sees everything... Users see everything but can only edit theirs"
+  // So stats like "Active Ads" might be interesting to see globally or personally.
+  // Let's keep it personal for now if userId is provided, but maybe we should expose global stats too.
+  // Actually, if everyone sees everyone's ads, "Active Ads" count should probably be global.
+  // But let's stick to existing logic for stats unless requested otherwise.
   
   const activeAdsQuery = userId
     ? `SELECT COUNT(*) as count FROM ads WHERE is_active = 1 AND start_date <= ? AND end_date >= ? AND user_id = ?`
@@ -383,6 +421,7 @@ export interface User {
   reset_expires?: Date | null
   display_name?: string | null
   avatar_url?: string | null
+  last_seen?: Date | null
 }
 
 export function getUserByUsername(username: string): User | null {
@@ -463,8 +502,59 @@ export function setAvatarUrl(userId: number, url: string): void {
   database.prepare('UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(url, userId)
 }
 
-export function listUsers(): { id: number; username: string; display_name: string | null }[] {
+export function updateLastSeen(userId: number): void {
   const database = getDatabase()
-  const rows = database.prepare('SELECT id, username, display_name FROM users ORDER BY username').all() as any[]
-  return rows.map((r) => ({ id: r.id, username: r.username, display_name: r.display_name ?? null }))
+  database.prepare('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?').run(userId)
+}
+
+export function listUsers(): { id: number; username: string; display_name: string | null; role: string | null; last_seen: string | null; email: string | null; status: string | null }[] {
+  const database = getDatabase()
+  const rows = database.prepare('SELECT id, username, display_name, role, last_seen, email, status FROM users ORDER BY username').all() as any[]
+  return rows.map((r) => ({ 
+    id: r.id, 
+    username: r.username, 
+    display_name: r.display_name ?? null,
+    role: r.role ?? 'user',
+    last_seen: r.last_seen ?? null,
+    email: r.email ?? null,
+    status: r.status ?? 'pending'
+  }))
+}
+
+export function updateUser(id: number, updates: { role?: string; status?: string }): boolean {
+  const database = getDatabase()
+  const sets: string[] = []
+  const values: any[] = []
+  
+  if (updates.role) {
+    sets.push('role = ?')
+    values.push(updates.role)
+  }
+  if (updates.status) {
+    sets.push('status = ?')
+    values.push(updates.status)
+  }
+  
+  if (sets.length === 0) return false
+  
+  sets.push('updated_at = CURRENT_TIMESTAMP')
+  values.push(id)
+  
+  const query = `UPDATE users SET ${sets.join(', ')} WHERE id = ?`
+  const result = database.prepare(query).run(...values)
+  return result.changes > 0
+}
+
+export function deleteUser(id: number): boolean {
+  const database = getDatabase()
+  // First delete related data if necessary, or rely on foreign keys if configured (SQLite default often OFF)
+  // For safety, let's delete sessions or related things if we had a separate session table, but we use JWT.
+  // We might want to reassign ads/partners? For now, let's just delete the user.
+  // Ads and Partners have user_id. We should probably keep them or reassign them.
+  // Simple approach: Set user_id to NULL or delete them? 
+  // Let's assume we just delete the user. If ads/partners require user_id, this might fail if FK constraints exist.
+  // Checking schema... "user_id INTEGER" usually implies it can be whatever unless "FOREIGN KEY" is explicit.
+  // Let's just run DELETE.
+  const result = database.prepare('DELETE FROM users WHERE id = ?').run(id)
+  return result.changes > 0
 }

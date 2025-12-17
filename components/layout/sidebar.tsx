@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Table2, Building2, Settings, ChevronLeft, ChevronRight, Megaphone } from "lucide-react"
+import { LayoutDashboard, Table2, Building2, Settings, ChevronLeft, ChevronRight, Megaphone, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import SplitText from "@/components/SplitText"
@@ -20,15 +20,21 @@ export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; avatarUrl?: string | null } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; avatarUrl?: string | null; role?: string } | null>(null)
 
   useEffect(() => {
     ;(async () => {
       try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" })
+        const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, avatarUrl: data.avatarUrl ?? null })
+        setMe({ 
+            username: data.username, 
+            email: data.email ?? null, 
+            displayName: data.displayName ?? null, 
+            avatarUrl: data.avatarUrl ?? null,
+            role: data.role
+        })
       } catch {}
     })()
     const onAvatarUpdated = (e: Event) => {
@@ -40,6 +46,12 @@ export function Sidebar() {
       window.removeEventListener("avatar-updated", onAvatarUpdated as any)
     }
   }, [])
+
+
+  const displayedNavItems = [...navItems]
+  if (me?.role === 'admin') {
+    displayedNavItems.push({ href: "/admin/users", label: "Felhasználók", icon: Users })
+  }
 
   return (
     <aside
@@ -88,7 +100,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-2">
-          {navItems.map((item) => {
+          {displayedNavItems.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link

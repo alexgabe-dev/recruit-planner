@@ -9,7 +9,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    if (session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
+    if (session.role === 'visitor') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
     const { id: idParam } = await context.params
     const id = Number(idParam)
     const body = await request.json()
@@ -21,8 +21,12 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (body.endDate !== undefined) updates.endDate = new Date(body.endDate)
     if (body.isActive !== undefined) updates.isActive = Boolean(body.isActive)
     if (body.partnerId !== undefined) updates.partnerId = Number(body.partnerId)
-    const updated = updateAd(id, updates, session.userId)
-    if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    
+    // If admin, pass undefined as userId to skip ownership check
+    const checkUserId = session.role === 'admin' ? undefined : session.userId
+    const updated = updateAd(id, updates, checkUserId)
+    
+    if (!updated) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })
     return NextResponse.json(updated)
   } catch {
     return NextResponse.json({ error: "Failed to update ad" }, { status: 500 })
@@ -33,11 +37,17 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    if (session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
+    
+    // Only admins can delete
+    if (session.role !== 'admin') return NextResponse.json({ error: 'Csak admin törölhet' }, { status: 403 })
+    
     const { id: idParam } = await context.params
     const id = Number(idParam)
     console.log("DELETE /api/ads", { id })
-    const ok = deleteAd(id, session.userId)
+    
+    // Admin delete (no userId check needed, or pass undefined)
+    const ok = deleteAd(id)
+    
     if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 })
     console.log("Deleted ad", { id })
     return NextResponse.json({ success: true })
