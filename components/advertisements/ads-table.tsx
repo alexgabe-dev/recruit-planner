@@ -24,6 +24,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useStore } from "@/lib/db-store"
 import { type Ad, type Partner, getAdStatus, type AdStatus } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -31,19 +32,29 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { TypeBadge } from "@/components/ui/type-badge"
 import { exportToExcel } from "@/lib/excel-export"
 import { toast } from "sonner"
-import { ArrowUpDown, Download, Search, Filter, Columns, MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react"
+import { ArrowUpDown, Download, Search, Filter, Columns, MoreHorizontal, Pencil, Trash2, Plus, X, Ban } from "lucide-react"
 import { AdFormDialog } from "./ad-form-dialog"
 import { DeleteAdDialog } from "./delete-ad-dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
 
 export function AdsTable() {
-  const { ads, partners } = useStore()
+  const { ads, partners, updateAd, deleteAd } = useStore()
   const [role, setRole] = useState<string | null>(null)
   const [me, setMe] = useState<any>(null)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ select: false })
+
+  // Update visibility based on role
+  useEffect(() => {
+    if (role === 'viewer' || role === 'visitor') {
+      setColumnVisibility(prev => ({ ...prev, select: false }))
+    }
+  }, [role])
+  const [rowSelection, setRowSelection] = useState({})
+  const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState<number | null>(null)
   const [globalFilter, setGlobalFilter] = useState("")
 
   // Filter states
@@ -56,6 +67,7 @@ export function AdsTable() {
   const [editingAd, setEditingAd] = useState<AdWithPartner | null>(null)
   const [deletingAd, setDeletingAd] = useState<AdWithPartner | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false)
 
   // Transform data
   const data: AdWithPartner[] = useMemo(() => {
@@ -74,16 +86,40 @@ export function AdsTable() {
         const data = await res.json()
         setMe(data)
         setRole(data.role)
-        if (data.role === 'admin') {
-           // Admin might want to see user list for filtering (if implemented)
-           // But existing code had logic for 'viewer' to see users? 
-           // Let's just fetch users if admin for potential future use or existing logic
-           // The original code: if (me.role === 'viewer') fetch users... 
-           // I'll leave it out for now unless needed.
-        }
       } catch {}
     })()
   }, [])
+
+  // Bulk Actions
+  const handleBulkStatusChange = async (active: boolean) => {
+    const selectedIds = Object.keys(rowSelection).map((index) => filteredData[parseInt(index)].id)
+    if (selectedIds.length === 0) return
+
+    try {
+      const promises = selectedIds.map(id => updateAd(id, { isActive: active }))
+      await Promise.all(promises)
+      toast.success(`${selectedIds.length} hirdetés státusza módosítva!`)
+      setRowSelection({})
+    } catch (error) {
+      toast.error("Hiba történt a státusz módosítása közben")
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const selectedIds = Object.keys(rowSelection).map((index) => filteredData[parseInt(index)].id)
+    if (selectedIds.length === 0) return
+
+    try {
+      const promises = selectedIds.map(id => deleteAd(id))
+      await Promise.all(promises)
+      toast.success(`${selectedIds.length} hirdetés törölve!`)
+      setRowSelection({})
+      setIsBulkDeleteOpen(false)
+    } catch (error) {
+      toast.error("Hiba történt a törlés közben")
+    }
+  }
+
 
   // Get unique values for filters
   const offices = useMemo(() => [...new Set(partners.map((p) => p.office))].sort(), [partners])
@@ -121,6 +157,52 @@ export function AdsTable() {
 
   const columns: ColumnDef<AdWithPartner>[] = [
     {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Összes kijelölése"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row, table }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => {
+            row.toggleSelected(!!value)
+            setLastSelectedRowIndex(row.index)
+          }}
+          onClick={(e) => {
+            if (e.shiftKey && lastSelectedRowIndex !== null) {
+              e.preventDefault()
+              const { rows } = table.getRowModel()
+              const currentIndex = row.index
+              const lastIndex = lastSelectedRowIndex
+
+              const start = Math.min(currentIndex, lastIndex)
+              const end = Math.max(currentIndex, lastIndex)
+
+              const newSelection = { ...rowSelection }
+
+              for (let i = start; i <= end; i++) {
+                const r = rows[i]
+                if (r) newSelection[r.id] = true
+              }
+
+              setRowSelection(newSelection)
+              setLastSelectedRowIndex(currentIndex)
+            }
+          }}
+          aria-label="Sor kijelölése"
+          className="translate-y-[2px]"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: true,
+    },
+    {
+      id: "partner_office",
       accessorKey: "partner.office",
       header: ({ column }) => (
         <Button
@@ -138,6 +220,7 @@ export function AdsTable() {
       },
     },
     {
+      id: "partner_name",
       accessorKey: "partner.name",
       header: ({ column }) => (
         <Button
@@ -152,6 +235,7 @@ export function AdsTable() {
       cell: ({ row }) => <span className="font-medium">{row.original.partner?.name}</span>,
     },
     {
+      id: "positionName",
       accessorKey: "positionName",
       header: ({ column }) => (
         <Button
@@ -166,6 +250,7 @@ export function AdsTable() {
       cell: ({ row }) => <span className="font-medium">{row.getValue("positionName")}</span>,
     },
     {
+      id: "adContent",
       accessorKey: "adContent",
       header: "Hirdetés",
       cell: ({ row }) => (
@@ -175,6 +260,7 @@ export function AdsTable() {
       ),
     },
     {
+      id: "type",
       accessorKey: "type",
       header: "Típus",
       cell: ({ row }) => <TypeBadge type={row.getValue("type")} />,
@@ -301,10 +387,12 @@ export function AdsTable() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      rowSelection,
     },
   })
 
@@ -369,8 +457,9 @@ export function AdsTable() {
                 .filter((column) => column.getCanHide())
                 .map((column) => {
                   const columnNames: Record<string, string> = {
-                    "partner.office": "Iroda",
-                    "partner.name": "Partner",
+                    select: "Kijelölés",
+                    partner_office: "Iroda",
+                    partner_name: "Partner",
                     positionName: "Munkakör",
                     adContent: "Hirdetés",
                     type: "Típus",
@@ -513,6 +602,58 @@ export function AdsTable() {
       {deletingAd && (
         <DeleteAdDialog open={!!deletingAd} onOpenChange={(open) => !open && setDeletingAd(null)} ad={deletingAd} />
       )}
+
+      <div
+        className={cn(
+          "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border bg-background p-2 shadow-lg transition-all duration-300 ease-in-out",
+          Object.keys(rowSelection).length > 0 && (role === 'admin' || role === 'user')
+            ? "translate-y-0 opacity-100"
+            : "translate-y-[150%] opacity-0 pointer-events-none"
+        )}
+      >
+        <div className="flex items-center gap-2 border-r pr-2 mr-2">
+          <span className="text-sm font-medium px-2">
+            {Object.keys(rowSelection).length} kiválasztva
+          </span>
+          <Button variant="ghost" size="icon" onClick={() => setRowSelection({})} className="h-8 w-8">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          onClick={() => handleBulkStatusChange(false)}
+          className="text-orange-600 hover:text-orange-700"
+        >
+          <Ban className="mr-2 h-4 w-4" />
+          Lezárás
+        </Button>
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={() => setIsBulkDeleteOpen(true)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Törlés
+        </Button>
+      </div>
+
+      <AlertDialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Biztosan törölni szeretnéd a kijelölt hirdetéseket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ez a művelet nem vonható vissza. {Object.keys(rowSelection).length} hirdetés véglegesen törlésre kerül.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Mégse</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Törlés
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
