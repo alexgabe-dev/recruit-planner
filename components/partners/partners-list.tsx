@@ -24,8 +24,6 @@ export function PartnersList() {
   const { partners, ads } = useStore()
   const [role, setRole] = useState<string | null>(null)
   const [me, setMe] = useState<any>(null)
-  const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null)
@@ -98,29 +96,6 @@ export function PartnersList() {
             <Plus className="mr-2 h-4 w-4" />
             Új partner
           </Button>
-        )}
-        {role === 'viewer' && (
-          <div className="flex items-center gap-2">
-            <Select value={selectedUserId ? String(selectedUserId) : ''} onValueChange={(v) => {
-              const id = Number(v)
-              setSelectedUserId(id)
-              if (typeof window !== 'undefined') {
-                window.localStorage.setItem('viewerLastUserId', String(id))
-              }
-              useStore.getState().loadData(id)
-            }}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Felhasználó" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    {u.username}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         )}
       </div>
 

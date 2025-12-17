@@ -41,8 +41,6 @@ export function AdsTable() {
   const { ads, partners } = useStore()
   const [role, setRole] = useState<string | null>(null)
   const [me, setMe] = useState<any>(null)
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
-  const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -426,29 +424,6 @@ export function AdsTable() {
         )}
 
         <span className="ml-auto text-sm text-muted-foreground">{filteredData.length} hirdetés</span>
-        {role === 'viewer' && (
-          <div className="flex items-center gap-2">
-            <Select value={selectedUserId ? String(selectedUserId) : ''} onValueChange={(v) => {
-              const id = Number(v)
-              setSelectedUserId(id)
-              if (typeof window !== 'undefined') {
-                window.localStorage.setItem('viewerLastUserId', String(id))
-              }
-              useStore.getState().loadData(id)
-            }}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Felhasználó" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    {u.username}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
 
       {/* Table */}
