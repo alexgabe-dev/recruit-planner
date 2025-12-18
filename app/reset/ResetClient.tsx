@@ -48,14 +48,14 @@ export default function ResetClient() {
   }
 
   return (
-    <Card className="relative z-10 w-full max-w-md border-border bg-card/80 backdrop-blur shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <CardHeader className="space-y-1 text-center pb-2">
+    <Card className="relative z-10 w-full max-w-2xl border-border bg-card/80 backdrop-blur shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <CardHeader className="space-y-1 text-center pb-0">
         <CardTitle className="text-2xl font-bold tracking-tight">Jelszó visszaállítása</CardTitle>
         <CardDescription>
           {success ? "Jelszó sikeresen frissítve" : "Add meg az új jelszavadat"}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="pt-6">
         {success ? (
           <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in zoom-in-95 duration-500">
             <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
