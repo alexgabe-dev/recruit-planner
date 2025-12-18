@@ -6,7 +6,7 @@ const COOKIE_NAME = "session"
 export async function getSession(req: Request) {
   // Try Next.js cookies() API first
   try {
-    const c = cookies()
+    const c = await cookies()
     const fromCookies = c.get(COOKIE_NAME)?.value
     if (fromCookies) {
       const session = await verifyToken(fromCookies)

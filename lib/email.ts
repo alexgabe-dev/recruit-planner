@@ -141,3 +141,24 @@ export function resetEmail({ to, resetUrl }: { to: string; resetUrl: string }) {
     })
   }
 }
+
+export function warningEmail({ to, message, senderName, sentAt }: { to: string; message: string; senderName: string; sentAt: string }) {
+  const content = `
+    <p style="${styles.text}">Figyelmeztetés érkezett a következő felhasználótól: <strong>${senderName}</strong></p>
+    <p style="${styles.text}">Időpont: ${sentAt}</p>
+    <div style="${styles.detailBox}">
+      <p style="${styles.detailRow}"><strong>Üzenet:</strong></p>
+      <p style="${styles.text}" style="white-space: pre-wrap;">${message.replace(/\n/g, '<br>')}</p>
+    </div>
+    <p style="${styles.text}">Ez egy automatikus értesítés, kérjük ne válaszolj rá közvetlenül.</p>
+  `
+
+  return {
+    to,
+    subject: 'Figyelmeztetés - Hirdetés Rendszerző',
+    html: generateEmailHtml({
+      title: 'Figyelmeztetés',
+      content
+    })
+  }
+}

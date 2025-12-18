@@ -35,6 +35,7 @@ import { toast } from "sonner"
 import { ArrowUpDown, Download, Search, Filter, Columns, MoreHorizontal, Pencil, Trash2, Plus, X, Ban } from "lucide-react"
 import { AdFormDialog } from "./ad-form-dialog"
 import { DeleteAdDialog } from "./delete-ad-dialog"
+import { WarningDialog } from "./warning-dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
@@ -49,7 +50,7 @@ export function AdsTable() {
 
   // Update visibility based on role
   useEffect(() => {
-    if (role === 'viewer' || role === 'visitor') {
+    if (role === 'viewer') {
       setColumnVisibility(prev => ({ ...prev, select: false }))
     }
   }, [role])
@@ -85,7 +86,7 @@ export function AdsTable() {
         if (!res.ok) return
         const data = await res.json()
         setMe(data)
-        setRole(data.role)
+        setRole(data.role === 'visitor' ? 'viewer' : data.role)
       } catch {}
     })()
   }, [])
@@ -433,7 +434,7 @@ export function AdsTable() {
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-2">
-          {me?.role !== 'viewer' && me?.role !== 'visitor' && (
+          {me?.role !== 'viewer' && (
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Új hirdetés
@@ -547,7 +548,10 @@ export function AdsTable() {
           </Button>
         )}
 
-        <span className="ml-auto text-sm text-muted-foreground">{filteredData.length} hirdetés</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{filteredData.length} hirdetés</span>
+          {role === 'viewer' && <WarningDialog />}
+        </div>
       </div>
 
       {/* Table */}
