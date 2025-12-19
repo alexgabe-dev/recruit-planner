@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 
 const COOKIE_NAME = "session"
 
-export async function getSession(req: Request) {
+export async function getSession(req?: Request) {
   // Try Next.js cookies() API first
   try {
     const c = await cookies()
@@ -15,6 +15,8 @@ export async function getSession(req: Request) {
   } catch {
     // ignore, fallback to header parsing
   }
+
+  if (!req) return null
 
   // Fallback: parse Cookie header
   const cookie = req.headers.get("cookie") || ""

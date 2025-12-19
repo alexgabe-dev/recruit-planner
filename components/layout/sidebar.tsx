@@ -51,6 +51,7 @@ export function Sidebar() {
   const displayedNavItems = [...navItems]
   if (me?.role === 'admin') {
     displayedNavItems.push({ href: "/admin/users", label: "Felhasználók", icon: Users })
+    displayedNavItems.push({ href: "/admin/notifications", label: "Értesítések", icon: Megaphone })
   }
 
   return (
