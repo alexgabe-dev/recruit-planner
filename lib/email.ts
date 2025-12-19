@@ -162,3 +162,37 @@ export function warningEmail({ to, message, senderName, sentAt }: { to: string; 
     })
   }
 }
+
+export function weeklyDigestEmail({ to, ads, start, end }: { to: string; ads: any[]; start: string; end: string }) {
+  const adRows = ads.map(ad => `
+    <div style="background-color: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
+      <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">${ad.positionName}</div>
+      <div style="font-size: 14px; color: #64748b; margin-bottom: 4px;">
+        <span style="background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${ad.type}</span>
+        • ${ad.partner.name} (${ad.partner.office})
+      </div>
+      <div style="font-size: 14px; color: #ef4444;">
+        Lejárat: ${new Date(ad.endDate).toLocaleDateString('hu-HU')}
+      </div>
+    </div>
+  `).join('')
+
+  const content = `
+    <p style="${styles.text}">Az alábbi hirdetések járnak le ezen a héten (${start} - ${end}):</p>
+    <div style="${styles.detailBox}">
+      ${adRows}
+    </div>
+    <p style="${styles.text}">Kérjük, ellenőrizd a hirdetéseket és hosszabbítsd meg őket, ha szükséges.</p>
+  `
+
+  return {
+    to,
+    subject: 'Heti hirdetés emlékeztető',
+    html: generateEmailHtml({
+      title: 'Lejáró hirdetések',
+      content,
+      buttonText: 'Hirdetések megtekintése',
+      buttonUrl: (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000') + '/advertisements'
+    })
+  }
+}

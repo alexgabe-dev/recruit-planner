@@ -86,8 +86,17 @@ export function initializeDatabase() {
       reset_expires DATETIME,
       display_name TEXT,
       avatar_url TEXT,
+      last_seen DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  // Create system settings table
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS system_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     )
   `)
 
@@ -557,4 +566,71 @@ export function deleteUser(id: number): boolean {
   // Let's just run DELETE.
   const result = database.prepare('DELETE FROM users WHERE id = ?').run(id)
   return result.changes > 0
+}
+
+// System Settings
+export function getSystemSettings() {
+  const database = getDatabase()
+  const rows = database.prepare('SELECT key, value FROM system_settings').all() as { key: string; value: string }[]
+  const settings: Record<string, any> = {}
+  rows.forEach(row => {
+    try {
+      settings[row.key] = JSON.parse(row.value)
+    } catch {
+      settings[row.key] = row.value
+    }
+  })
+  return settings
+}
+
+export function saveSystemSettings(settings: Record<string, any>) {
+  const database = getDatabase()
+  const insert = database.prepare('INSERT OR REPLACE INTO system_settings (key, value) VALUES (?, ?)')
+  
+  const transaction = database.transaction(() => {
+    Object.entries(settings).forEach(([key, value]) => {
+      insert.run(key, JSON.stringify(value))
+    })
+  })
+  
+  transaction()
+}
+
+export function getExpiringAdsForUser(userId: number, days: number = 7, types: string[] = []) {
+  const database = getDatabase()
+  const today = new Date().toISOString().split('T')[0]
+  const future = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  
+  let query = `
+    SELECT a.*, p.name as partner_name, p.office as partner_office 
+    FROM ads a
+    JOIN partners p ON a.partner_id = p.id
+    WHERE a.user_id = ? 
+    AND a.is_active = 1 
+    AND a.end_date >= ? 
+    AND a.end_date <= ?
+  `
+  
+  if (types.length > 0) {
+    const placeholders = types.map(() => '?').join(',')
+    query += ` AND a.type IN (${placeholders})`
+  }
+  
+  query += ` ORDER BY a.end_date ASC`
+  
+  const stmt = database.prepare(query)
+  const args = [userId, today, future, ...types]
+  
+  const rows = stmt.all(...args) as any[]
+  
+  return rows.map(row => ({
+    id: row.id,
+    positionName: row.position_name,
+    type: row.type,
+    endDate: new Date(row.end_date),
+    partner: {
+      name: row.partner_name,
+      office: row.partner_office
+    }
+  }))
 }
