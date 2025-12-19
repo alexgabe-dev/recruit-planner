@@ -40,12 +40,13 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    if (session.role === 'visitor') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
+    if (session.role === 'visitor' || session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
     
     const { id: idParam } = await context.params
     const id = Number(idParam)
     
-    const checkUserId = session.role === 'admin' ? undefined : session.userId
+    // Allow 'user' and 'admin' to delete any ad (shared workspace)
+    const checkUserId = undefined
     const success = deleteAd(id, checkUserId)
     
     if (!success) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })

@@ -6,14 +6,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    if (session.role === 'visitor') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
+    if (session.role === 'visitor' || session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
 
     const { id } = await params
     const partnerId = Number(id)
     const body = await request.json()
     
-    // If admin, pass undefined as userId to skip ownership check
-    const checkUserId = session.role === 'admin' ? undefined : session.userId
+    // Allow 'user' and 'admin' to edit any partner (shared workspace)
+    const checkUserId = undefined
     const updated = updatePartner(partnerId, body, checkUserId)
 
     if (!updated) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })
@@ -31,12 +31,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    if (session.role === 'visitor') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
+    if (session.role === 'visitor' || session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
 
     const { id } = await params
     const partnerId = Number(id)
     
-    const checkUserId = session.role === 'admin' ? undefined : session.userId
+    // Allow 'user' and 'admin' to delete any partner (shared workspace)
+    const checkUserId = undefined
     const success = deletePartner(partnerId, checkUserId)
 
     if (!success) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })
