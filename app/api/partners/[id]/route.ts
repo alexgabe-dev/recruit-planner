@@ -49,24 +49,3 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "Failed to delete partner" }, { status: 500 })
   }
 }
-
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const session = await getSession(request)
-    if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    
-    // Only admins can delete
-    if (session.role !== 'admin') return NextResponse.json({ error: 'Csak admin törölhet' }, { status: 403 })
-
-    const { id } = await params
-    const partnerId = Number(id)
-    
-    const ok = deletePartner(partnerId)
-    if (!ok) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })
-    
-    return NextResponse.json({ success: true })
-  } catch (e) {
-    console.error("Partner delete error:", e)
-    return NextResponse.json({ error: "Failed to delete partner" }, { status: 500 })
-  }
-}

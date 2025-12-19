@@ -57,26 +57,3 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     return NextResponse.json({ error: "Failed to delete ad" }, { status: 500 })
   }
 }
-
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
-  try {
-    const session = await getSession(request)
-    if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    
-    // Only admins can delete
-    if (session.role !== 'admin') return NextResponse.json({ error: 'Csak admin törölhet' }, { status: 403 })
-    
-    const { id: idParam } = await context.params
-    const id = Number(idParam)
-    console.log("DELETE /api/ads", { id })
-    
-    // Admin delete (no userId check needed, or pass undefined)
-    const ok = deleteAd(id)
-    
-    if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    console.log("Deleted ad", { id })
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: "Failed to delete ad" }, { status: 500 })
-  }
-}
