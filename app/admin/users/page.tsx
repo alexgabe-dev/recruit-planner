@@ -212,9 +212,15 @@ export default function UsersPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Felhasználók kezelése</h1>
-          <p className="text-muted-foreground">Felhasználók és jogosultságok áttekintése</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Felhasználók kezelése</h1>
+            <p className="text-muted-foreground">Felhasználók és jogosultságok áttekintése</p>
+          </div>
+          <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Új meghívása
+          </Button>
         </div>
 
         <div className="rounded-md border bg-card">
