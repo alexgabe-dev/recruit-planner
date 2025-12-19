@@ -1,0 +1,143 @@
+[33mcommit 6487ee4a2c3a60a36a861d4178c31ce302910336[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Dec 19 14:58:45 2025 +0100
+
+    feature: new settings gui
+
+[33mcommit 6c78d2f40c6d9f14075d88dccbe981c1437d4b88[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Dec 19 10:23:51 2025 +0100
+
+    feature: admin logging
+
+[33mcommit c0982eabbe209e1843b4b8c79440b6ea50d1d661[m
+Author: Gábor Sándor <gabor.sandor@vizitor.hu>
+Date:   Fri Dec 19 09:55:54 2025 +0100
+
+    Stop tracking database.sqlite
+
+[33mcommit 035a1d361a635bc9cc908df209e7008c3bc99f2c[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Dec 19 09:51:56 2025 +0100
+
+    fix: notification list update
+
+[33mcommit cfaa3c669369c42aebcb37c12898db0bd515ceb1[m
+Author: Gábor Sándor <gabor.sandor@vizitor.hu>
+Date:   Fri Dec 19 09:39:42 2025 +0100
+
+    Stop tracking local database file
+
+[33mcommit 6cf1588b5ecbd5396a7f8357c2d7411404a2acdf[m
+Author: Gábor Sándor <gabor.sandor@vizitor.hu>
+Date:   Fri Dec 19 09:39:04 2025 +0100
+
+    Keep local database after pull
+
+[33mcommit 615331de95a99d2b05fbe84576c5d180efd0005f[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Dec 19 09:34:34 2025 +0100
+
+    feature: weekly notification
+
+[33mcommit d27791cf6bc799d55f5e4eb4b9e16babcd42a7bd[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Thu Dec 18 15:44:48 2025 +0100
+
+    feature: new login animations
+
+[33mcommit 582f009196a2f4b39e9d4138722d19a38325f754[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Thu Dec 18 14:44:44 2025 +0100
+
+    feature: viewer role alert
+
+[33mcommit b7383e14b40ffa1db6c651a7a467593d0d1f6077[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Wed Dec 17 17:10:08 2025 +0100
+
+    feature: checkbox and multi touch
+
+[33mcommit eee53987289944e34587a83e3234d5019f66858b[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Wed Dec 17 16:47:08 2025 +0100
+
+    fix: new calendar design
+
+[33mcommit 664e3ff01a38fffaf3b97e886fc322147a9c434b[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Wed Dec 17 16:06:36 2025 +0100
+
+    feature: admin features
+
+[33mcommit 27b9a2e3d0dc02952933aa6e0f5535c959ff84a2[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Wed Dec 17 15:14:11 2025 +0100
+
+    feature: new login design
+
+[33mcommit 2b6a58de35c79deb129f3a683c068c3ef483645d[m
+Author: Alex Gabe <alexgabe@hovar.hu>
+Date:   Wed Dec 17 14:36:47 2025 +0100
+
+    fix: smtp errors
+
+[33mcommit 63c73a8234d665759524581930e763173d161000[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Mon Dec 1 14:54:38 2025 +0100
+
+    feature: db import, fix: Patner db deletion
+
+[33mcommit 9ca28a5edce80bbf0bc0f1344577603116033b00[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Mon Dec 1 13:18:39 2025 +0100
+
+    feature: Profession support
+
+[33mcommit 222556d2810909f5f895ad1742e578bbb9653f64[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Nov 28 15:22:04 2025 +0100
+
+    feature: profile picture and account rework
+
+[33mcommit eee66a296f4f8857a8b7fdb755a842a540f57d8e[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Nov 28 13:50:41 2025 +0100
+
+    FEATURE: viewewer role big patch
+
+[33mcommit 7c99d002898c35d2be2d0267fe751fcd663566bd[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Nov 28 12:18:00 2025 +0100
+
+    fix: account new informations
+
+[33mcommit f8885f2405e8dea6a8a1c57d63119a0423621255[m
+Author: alexgabe-dev <gaborsanyi08@gmail.com>
+Date:   Fri Nov 28 10:33:24 2025 +0100
+
+    fix: Settings uI and clock
+
+[33mcommit 0bd6a1aaf7d0e54086fe1a7b4cedb73fb0cde6ce[m
+Author: unknown <gaborsanyi08@gmail.com>
+Date:   Fri Nov 28 00:13:06 2025 +0100
+
+    feature: better securuty
+
+[33mcommit ea8ebd6dbb4cb11915bc4e7f9ba6c78c7d33227f[m
+Author: unknown <gaborsanyi08@gmail.com>
+Date:   Thu Nov 27 21:30:13 2025 +0100
+
+    fix: daily events fix
+
+[33mcommit 04754dea6fca9d202f9fbf93dddc9c2f06163798[m
+Author: unknown <gaborsanyi08@gmail.com>
+Date:   Thu Nov 27 19:51:11 2025 +0100
+
+    fix: db issues
+
+[33mcommit 789eafacf5b6edd262aac21f4b9c6483cce6a509[m
+Author: unknown <gaborsanyi08@gmail.com>
+Date:   Thu Nov 27 17:55:18 2025 +0100
+
+    fix: status update
