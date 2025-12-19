@@ -40,8 +40,9 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const session = await getSession(request)
     if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
-    if (session.role === 'visitor' || session.role === 'viewer') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
-    
+    if (session.role === 'visitor' || session.role === 'viewer') {
+        return NextResponse.json({ error: `Nincs jogosultság (Jelenlegi szerepkör: ${session.role})` }, { status: 403 })
+    }
     const { id: idParam } = await context.params
     const id = Number(idParam)
     

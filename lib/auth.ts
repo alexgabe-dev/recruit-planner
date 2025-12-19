@@ -1,11 +1,11 @@
 import { jwtVerify } from "jose"
 import { cookies } from "next/headers"
-import { updateLastSeen } from "./db"
+import { updateLastSeen, getUserById } from "./db"
 
 const COOKIE_NAME = "session"
 
 export async function getSession(req?: Request) {
-  let session = null
+  let session: any = null
   // Try Next.js cookies() API first
   try {
     const c = await cookies()
@@ -39,9 +39,14 @@ export async function getSession(req?: Request) {
   if (session) {
     try {
       updateLastSeen(session.userId)
+      // Force refresh role from DB to handle permission changes instantly
+      const user = getUserById(session.userId)
+      if (user && user.role) {
+        session.role = user.role
+      }
     } catch (e) {
       // Ignore DB errors during session check to prevent blocking
-      console.error("Failed to update last seen:", e)
+      console.error("Failed to update last seen or refresh role:", e)
     }
     return session
   }

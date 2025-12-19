@@ -455,6 +455,13 @@ export function getUserByUsername(username: string): User | null {
   return row ?? null
 }
 
+export function getUserById(id: number): User | null {
+  const database = getDatabase()
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, display_name, avatar_url FROM users WHERE id = ?')
+  const row = stmt.get(id) as User | undefined
+  return row ?? null
+}
+
 export function getUserByEmail(email: string): User | null {
   const database = getDatabase()
   const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status FROM users WHERE email = ?')
