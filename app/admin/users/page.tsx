@@ -8,7 +8,7 @@ import { hu } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, Pencil, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Eye, UserX } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Eye, UserX, Send, Copy, Plus, Mail } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +51,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deletingUser, setDeletingUser] = useState<User | null>(null)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const router = useRouter()
 
   const fetchUsers = () => {
@@ -136,6 +137,29 @@ export default function UsersPage() {
       }
     } catch {
       toast.error("Hiba történt")
+    }
+  }
+
+  const handleCreateInvite = async (email: string, role: string, sendEmail: boolean) => {
+    try {
+      const res = await fetch('/api/admin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role, sendEmail })
+      })
+      
+      const data = await res.json()
+      
+      if (!res.ok) {
+        toast.error(data.error || "Hiba történt a meghívó létrehozásakor")
+        return null
+      }
+
+      toast.success("Meghívó sikeresen létrehozva")
+      return data.inviteLink
+    } catch {
+      toast.error("Hiba történt")
+      return null
     }
   }
 
@@ -280,7 +304,140 @@ export default function UsersPage() {
         user={deletingUser}
         onConfirm={handleDeleteUser}
       />
+
+      {/* Invite Dialog */}
+      <InviteUserDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        onSubmit={handleCreateInvite}
+      />
     </MainLayout>
+  )
+}
+
+function InviteUserDialog({ open, onOpenChange, onSubmit }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (email: string, role: string, sendEmail: boolean) => Promise<string | null>;
+}) {
+  const [email, setEmail] = useState("")
+  const [role, setRole] = useState("user")
+  const [sendEmail, setSendEmail] = useState(false)
+  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!email) return
+    setLoading(true)
+    const link = await onSubmit(email, role, sendEmail)
+    if (link) {
+      setInviteLink(link)
+    }
+    setLoading(false)
+  }
+
+  const handleClose = () => {
+    onOpenChange(false)
+    setInviteLink(null)
+    setEmail("")
+    setRole("user")
+    setSendEmail(false)
+  }
+
+  const copyToClipboard = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink)
+      toast.success("Link másolva a vágólapra")
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(val) => !val && handleClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Felhasználó meghívása</DialogTitle>
+          <DialogDescription>
+            Új felhasználó meghívása email cím alapján. A felhasználó regisztrációja automatikusan elfogadásra kerül.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!inviteLink ? (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="invite-email">Email cím</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="pelda@email.hu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="invite-role">Szerepkör</Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="invite-role">
+                  <SelectValue placeholder="Válassz szerepkört" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                  <SelectItem value="visitor">Visitor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Button
+                    type="button"
+                    variant={sendEmail ? "default" : "outline"}
+                    size="sm"
+                    className={cn("w-full justify-start", sendEmail && "bg-primary text-primary-foreground")}
+                    onClick={() => setSendEmail(!sendEmail)}
+                >
+                    <Mail className="mr-2 h-4 w-4" />
+                    {sendEmail ? "Email küldése bekapcsolva" : "Email küldése kikapcsolva"}
+                </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+                {sendEmail 
+                    ? "A rendszer automatikusan elküldi a meghívót a megadott email címre." 
+                    : "A rendszer generál egy meghívó linket, amit manuálisan kell elküldeni."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg border">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <div className="text-sm font-medium">Meghívó sikeresen létrehozva!</div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label>Meghívó link</Label>
+              <div className="flex items-center gap-2">
+                <Input value={inviteLink} readOnly />
+                <Button size="icon" variant="outline" onClick={copyToClipboard}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          {!inviteLink ? (
+            <>
+              <Button variant="outline" onClick={handleClose}>Mégse</Button>
+              <Button onClick={handleSubmit} disabled={loading || !email}>
+                {loading ? "Létrehozás..." : "Meghívó létrehozása"}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleClose}>Bezárás</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

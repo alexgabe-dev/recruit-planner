@@ -21,11 +21,35 @@ export async function POST(req: Request) {
     if (existing) {
       return NextResponse.json({ error: 'A felhasználónév már létezik' }, { status: 409 })
     }
+
+    // Handle invite if present
+    let invite = null
+    if (inviteToken) {
+      invite = getInviteByToken(inviteToken)
+      if (!invite) {
+        return NextResponse.json({ error: 'Érvénytelen vagy lejárt meghívó' }, { status: 400 })
+      }
+      if (invite.email !== email) {
+        return NextResponse.json({ error: 'A meghívó más email címhez tartozik' }, { status: 400 })
+      }
+    }
+
     const salt = await bcrypt.genSalt(12)
     const hash = await bcrypt.hash(password, salt)
     const token = crypto.randomBytes(32).toString('hex')
+    
+    // Create user
     const created = createPendingUser({ username, email, hashedPassword: hash, approvalToken: token })
 
+    if (invite) {
+      // If invited, auto-approve and set role
+      updateUser(created.id, { status: 'active', role: invite.role })
+      markInviteUsed(invite.token)
+      // No approval email needed
+      return NextResponse.json({ success: true, invited: true })
+    }
+
+    // Normal registration flow
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const approveUrl = `${baseUrl}/api/auth/approve?token=${token}`
     const mail = approvalEmail({ username, email, approveUrl })

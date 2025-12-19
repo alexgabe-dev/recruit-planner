@@ -115,6 +115,21 @@ export function initializeDatabase() {
     )
   `)
 
+  // Create invites table
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS invites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      token TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL,
+      role TEXT NOT NULL,
+      created_by INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      used_at DATETIME,
+      expires_at DATETIME,
+      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `)
+
   // Ensure new columns exist on older databases
   const columns = database.prepare("PRAGMA table_info(users)").all() as { name: string }[]
   const have = new Set(columns.map((c) => c.name))
@@ -688,4 +703,42 @@ export function getActivityLogs(limit = 100, offset = 0, filters?: { userId?: nu
   params.push(limit, offset)
 
   return database.prepare(query).all(...params) as any[]
+}
+
+// Invite operations
+export interface Invite {
+  id: number
+  token: string
+  email: string
+  role: string
+  created_by: number
+  created_at: string
+  used_at: string | null
+  expires_at: string
+}
+
+export function createInvite(email: string, role: string, createdBy: number, expiresInMinutes = 15): string {
+  const database = getDatabase()
+  const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString()
+  
+  const stmt = database.prepare(`
+    INSERT INTO invites (token, email, role, created_by, expires_at)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  stmt.run(token, email, role, createdBy, expiresAt)
+  return token
+}
+
+export function getInviteByToken(token: string): Invite | null {
+  const database = getDatabase()
+  const stmt = database.prepare('SELECT * FROM invites WHERE token = ? AND used_at IS NULL AND expires_at > datetime("now")')
+  const invite = stmt.get(token) as Invite | undefined
+  return invite ?? null
+}
+
+export function markInviteUsed(token: string): void {
+  const database = getDatabase()
+  const stmt = database.prepare('UPDATE invites SET used_at = CURRENT_TIMESTAMP WHERE token = ?')
+  stmt.run(token)
 }

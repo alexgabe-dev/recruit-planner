@@ -1,21 +1,50 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import Orb from "@/components/Orb"
 import { CheckCircle2, User, Mail, Lock, Loader2, ArrowLeft } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [inviteToken, setInviteToken] = useState<string | null>(null)
+  const [isInviteValid, setIsInviteValid] = useState(false)
+
+  useEffect(() => {
+    const token = searchParams.get("invite")
+    if (token) {
+      setLoading(true)
+      fetch(`/api/auth/invite?token=${token}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.valid) {
+            setEmail(data.email)
+            setInviteToken(token)
+            setIsInviteValid(true)
+            toast.success("Meghívó érvényesítve")
+          } else {
+            toast.error(data.error || "Érvénytelen meghívó")
+          }
+        })
+        .catch(() => {
+          toast.error("Hiba a meghívó ellenőrzésekor")
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    }
+  }, [searchParams])
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +54,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, email, password, inviteToken }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -33,6 +62,14 @@ export default function RegisterPage() {
         setLoading(false)
         return
       }
+      
+      // If invited, redirect to login immediately as they are auto-approved
+      if (isInviteValid) {
+        toast.success("Sikeres regisztráció! Jelentkezz be.")
+        router.push("/login")
+        return
+      }
+
       setSuccess(true)
     } catch {
       setError("Szerver hiba")
@@ -50,8 +87,13 @@ export default function RegisterPage() {
           <CardHeader className="space-y-1 text-center pb-2 px-0">
             <CardTitle className="text-3xl font-bold tracking-tight">Regisztráció</CardTitle>
             <CardDescription className="text-base">
-              {success ? "Fiók létrehozása sikeres" : "Készíts új fiókot a rendszer használatához"}
-            </CardDescription>
+            {success ? "Fiók létrehozása sikeres" : "Készíts új fiókot a rendszer használatához"}
+            {isInviteValid && inviteExpiresAt && (
+              <span className="block mt-2 text-sm text-amber-600 font-medium">
+                A meghívó lejár: {formatDistanceToNow(new Date(inviteExpiresAt), { locale: hu, addSuffix: true })}
+              </span>
+            )}
+          </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 px-0">
             {success ? (
