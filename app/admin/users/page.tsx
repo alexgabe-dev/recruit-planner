@@ -7,6 +7,7 @@ import { formatDistanceToNow, format } from "date-fns"
 import { hu } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 import { MoreHorizontal, Pencil, Trash2, CheckCircle, XCircle, Shield, User as UserIcon, Eye, UserX, Send, Copy, Plus, Mail } from "lucide-react"
 import {
