@@ -211,7 +211,7 @@ export default function UsersPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 pt-14 sm:pt-0">
+      <div className="space-y-6 pt-14">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Felhasználók kezelése</h1>

@@ -20,11 +20,20 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useStore } from "@/lib/db-store"
 import { toast } from "sonner"
-import { Trash2, RotateCcw, Database, Info, KeyRound, User, Camera, Upload } from "lucide-react"
+import { Trash2, RotateCcw, Database, Info, KeyRound, User, Camera, Upload, Moon, Sun, Monitor, Bell, Languages, Shield, LogOut } from "lucide-react"
 import { useEffect, useState, useRef } from "react"
+import { useTheme } from "next-themes"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
+
+type SettingsTab = "profile" | "appearance" | "notifications" | "security" | "data" | "about"
 
 export function SettingsContent() {
   const { partners, ads } = useStore()
+  const { theme, setTheme } = useTheme()
+  const [activeTab, setActiveTab] = useState<SettingsTab>("profile")
+  
   const [confirmText, setConfirmText] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -257,306 +266,432 @@ export function SettingsContent() {
     }
   }
 
+  const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
+    { id: "profile", label: "Profil", icon: User },
+    { id: "appearance", label: "Megjelenés", icon: Monitor },
+    { id: "notifications", label: "Értesítések", icon: Bell },
+    { id: "security", label: "Biztonság", icon: Shield },
+    { id: "data", label: "Adatok", icon: Database },
+    { id: "about", label: "Névjegy", icon: Info },
+  ]
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2 items-stretch">
-      <Card className="border-border bg-card h-full overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-muted to-muted/50 relative">
-          <div className="absolute -bottom-12 left-6">
-            <div
-              className="relative group cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Avatar className="size-24 border-4 border-card shadow-sm">
-                <AvatarImage src={me?.avatarUrl ?? "/placeholder-user.jpg"} alt={me?.username ?? "Felhasználó"} className="object-cover" />
-                <AvatarFallback className="text-2xl">{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="text-white w-8 h-8" />
+    <div className="flex flex-col md:flex-row gap-8 items-start">
+      {/* Sidebar */}
+      <aside className="w-full md:w-64 flex-shrink-0 space-y-1">
+        {tabs.map((tab) => (
+          <Button
+            key={tab.id}
+            variant={activeTab === tab.id ? "secondary" : "ghost"}
+            className={cn("w-full justify-start gap-3", activeTab === tab.id && "bg-muted font-medium")}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+          </Button>
+        ))}
+      </aside>
+
+      {/* Content Area */}
+      <main className="flex-1 w-full max-w-3xl">
+        {/* Profile Tab */}
+        {activeTab === "profile" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div>
+              <h3 className="text-lg font-medium">Profil beállítások</h3>
+              <p className="text-sm text-muted-foreground">Személyes adataid és profilképed kezelése.</p>
+            </div>
+            <Separator />
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <Avatar className="size-24 border-2 border-border">
+                  <AvatarImage src={me?.avatarUrl ?? "/placeholder-user.jpg"} alt={me?.username ?? "Felhasználó"} className="object-cover" />
+                  <AvatarFallback className="text-2xl">{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="text-white w-8 h-8" />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <CardContent className="pt-16 space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold">{me?.displayName || me?.username || "Betöltés..."}</h2>
-            <p className="text-muted-foreground">@{me?.username}</p>
-            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-              {me?.role && <span className="px-2 py-0.5 rounded-full bg-muted font-medium capitalize">{me.role}</span>}
-              {me?.email && <span>{me.email}</span>}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Megjelenített név</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Pl. Ádám"
-                />
-                <Button onClick={handleSaveDisplayName} disabled={savingName}>
-                  {savingName ? 'Mentés...' : 'Mentés'}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">Ezt a nevet használjuk az üdvözlésnél és a felületen.</p>
-            </div>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null
-              if (f) {
-                if (cropSrc) URL.revokeObjectURL(cropSrc)
-                openCropperWithFile(f)
-              }
-            }}
-          />
-
-          <Dialog open={cropOpen} onOpenChange={setCropOpen}>
-            <DialogContent className="sm:max-w-xl">
-              <DialogHeader>
-                <DialogTitle>Profilkép szerkesztése</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div
-                  ref={setCropEl}
-                  className="relative mx-auto size-64 overflow-hidden rounded-full bg-muted"
-                  onMouseDown={(e) => {
-                    setDragging(true)
-                    setDragStart({ x: e.clientX, y: e.clientY })
-                  }}
-                  onMouseMove={(e) => {
-                    if (!dragging || !dragStart) return
-                    const dx = e.clientX - dragStart.x
-                    const dy = e.clientY - dragStart.y
-                    setOffset((o) => ({ x: o.x + dx, y: o.y + dy }))
-                    setDragStart({ x: e.clientX, y: e.clientY })
-                  }}
-                  onMouseUp={() => {
-                    setDragging(false)
-                    setDragStart(null)
-                  }}
-                  onMouseLeave={() => {
-                    setDragging(false)
-                    setDragStart(null)
-                  }}
-                >
-                  {cropSrc && (
-                    <img
-                      src={cropSrc}
-                      alt="crop"
-                      className="absolute top-0 left-0 select-none max-w-none max-h-none"
-                      style={{ width: 'auto', height: 'auto', transformOrigin: 'top left', transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}
-                      draggable={false}
+              <div className="space-y-4 flex-1 w-full">
+                <div className="grid gap-2">
+                  <Label>Felhasználónév</Label>
+                  <Input value={`@${me?.username}`} disabled className="bg-muted" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Megjelenített név</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Pl. Ádám"
                     />
-                  )}
+                    <Button onClick={handleSaveDisplayName} disabled={savingName}>
+                      {savingName ? 'Mentés...' : 'Mentés'}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Ez a név jelenik meg az üdvözlő képernyőn.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm">Nagyítás</label>
-                  <input
-                    type="range"
-                    min={0.1}
-                    max={5}
-                    step={0.01}
-                    value={zoom}
-                    onChange={(e) => setZoom(parseFloat(e.target.value))}
-                    className="flex-1"
-                  />
-                </div>
+                {me?.role && (
+                   <div className="grid gap-2">
+                     <Label>Szerepkör</Label>
+                     <div className="flex">
+                      <span className="px-2.5 py-1 rounded-md bg-muted text-sm font-medium capitalize">{me.role}</span>
+                     </div>
+                   </div>
+                )}
               </div>
-              <DialogFooter>
-                <Button onClick={handleSaveCropped} disabled={uploading}>{uploading ? "Mentés…" : "Mentés"}</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-base">Kijelentkezés</Label>
-              <p className="text-xs text-muted-foreground">Kilépés a jelenlegi munkamenetből</p>
             </div>
-            <form
-              action="/api/auth/logout"
-              method="POST"
-              onSubmit={async (e) => {
-                e.preventDefault()
-                await fetch('/api/auth/logout', { method: 'POST' })
-                window.location.href = '/login'
+          </div>
+        )}
+
+        {/* Appearance Tab */}
+        {activeTab === "appearance" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
+             <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-start justify-center pt-20 opacity-0 hover:opacity-100 transition-opacity cursor-not-allowed">
+              <span className="bg-background/80 px-3 py-1.5 rounded-full text-sm font-medium border border-border shadow-sm">
+                Fejlesztés alatt
+              </span>
+            </div>
+            <div className="opacity-50 pointer-events-none">
+              <h3 className="text-lg font-medium">Megjelenés</h3>
+              <p className="text-sm text-muted-foreground">A felület testreszabása.</p>
+            </div>
+            <Separator className="opacity-50" />
+            <div className="space-y-6 opacity-50 pointer-events-none">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Téma</Label>
+                  <p className="text-xs text-muted-foreground">Válassz a világos és sötét mód között</p>
+                </div>
+                <Select value={theme} onValueChange={setTheme} disabled>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Válassz témát" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light"><span className="flex items-center gap-2"><Sun className="h-4 w-4"/> Világos</span></SelectItem>
+                    <SelectItem value="dark"><span className="flex items-center gap-2"><Moon className="h-4 w-4"/> Sötét</span></SelectItem>
+                    <SelectItem value="system"><span className="flex items-center gap-2"><Monitor className="h-4 w-4"/> Rendszer</span></SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Nyelv</Label>
+                  <p className="text-xs text-muted-foreground">Az alkalmazás alapértelmezett nyelve</p>
+                </div>
+                <Select value="hu" disabled>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Nyelv" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hu"><span className="flex items-center gap-2"><Languages className="h-4 w-4"/> Magyar</span></SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === "notifications" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
+             <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-start justify-center pt-20 opacity-0 hover:opacity-100 transition-opacity cursor-not-allowed">
+              <span className="bg-background/80 px-3 py-1.5 rounded-full text-sm font-medium border border-border shadow-sm">
+                Fejlesztés alatt
+              </span>
+            </div>
+            <div className="opacity-50 pointer-events-none">
+              <h3 className="text-lg font-medium">Értesítések</h3>
+              <p className="text-sm text-muted-foreground">Döntsd el, miről szeretnél emailt kapni.</p>
+            </div>
+            <Separator className="opacity-50" />
+            <div className="space-y-6 opacity-50 pointer-events-none">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Heti emlékeztető</Label>
+                  <p className="text-xs text-muted-foreground">Összefoglaló a lejáró hirdetésekről minden hétfőn.</p>
+                </div>
+                <Switch checked={true} disabled />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Új hirdetés</Label>
+                  <p className="text-xs text-muted-foreground">Azonnali értesítés, ha valaki új hirdetést hoz létre.</p>
+                </div>
+                <Switch checked={false} disabled />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Security Tab */}
+        {activeTab === "security" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div>
+              <h3 className="text-lg font-medium">Biztonság</h3>
+              <p className="text-sm text-muted-foreground">Jelszó módosítása és fiók biztonság.</p>
+            </div>
+            <Separator />
+            <div className="space-y-4 max-w-md">
+              <div className="space-y-2">
+                <Label>Jelenlegi jelszó</Label>
+                <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Új jelszó</Label>
+                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Új jelszó megerősítése</Label>
+                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              </div>
+              <Button onClick={handleChangePassword} disabled={changing}>
+                {changing ? "Frissítés..." : "Jelszó frissítése"}
+              </Button>
+            </div>
+            <Separator />
+            <div>
+               <h4 className="text-sm font-medium text-destructive mb-4">Veszélyzóna</h4>
+               <form
+                action="/api/auth/logout"
+                method="POST"
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  await fetch('/api/auth/logout', { method: 'POST' })
+                  window.location.href = '/login'
+                }}
+              >
+                <Button variant="destructive" className="gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Kijelentkezés az eszközről
+                </Button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Data Tab */}
+        {activeTab === "data" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div>
+              <h3 className="text-lg font-medium">Adatok</h3>
+              <p className="text-sm text-muted-foreground">Rendszeradatok és adatbázis kezelés.</p>
+            </div>
+            <Separator />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Partnerek</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{partners.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Hirdetések</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{ads.length}</div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {me?.role === 'admin' && (
+              <>
+                <Separator />
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">Adminisztrációs eszközök</h4>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="p-4 border rounded-lg space-y-3 bg-card">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Upload className="h-4 w-4" />
+                        Importálás
+                      </div>
+                      <p className="text-xs text-muted-foreground">Adatok tömeges betöltése Excel fájlból.</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => importFileRef.current?.click()}
+                        disabled={importing}
+                      >
+                        {importing ? "Feltöltés..." : "Fájl kiválasztása"}
+                      </Button>
+                      <input
+                        type="file"
+                        accept=".xlsx"
+                        className="hidden"
+                        ref={importFileRef}
+                        onChange={handleImport}
+                      />
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg space-y-3 bg-card">
+                      <div className="flex items-center gap-2 font-medium">
+                        <RotateCcw className="h-4 w-4" />
+                        Visszaállítás
+                      </div>
+                      <p className="text-xs text-muted-foreground">A rendszer visszaállítása a mintaadatokra.</p>
+                      <Button variant="outline" size="sm" className="w-full" onClick={handleResetData}>
+                        Mintaadatok betöltése
+                      </Button>
+                    </div>
+
+                    <div className="p-4 border border-destructive/20 rounded-lg space-y-3 bg-destructive/5 sm:col-span-2">
+                      <div className="flex items-center gap-2 font-medium text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                        Adatok törlése
+                      </div>
+                      <p className="text-xs text-muted-foreground">Minden partner és hirdetés végleges törlése az adatbázisból.</p>
+                       <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">Törlési folyamat indítása</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Biztosan törlöd az összes adatot?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A művelet nem vonható vissza. Minden partner és hirdetés törlődik.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="space-y-2 py-2">
+                            <p className="text-xs text-muted-foreground">Írd be: <span className="font-semibold">ELFOGADOM</span></p>
+                            <Input
+                              placeholder="ELFOGADOM"
+                              value={confirmText}
+                              onChange={(e) => setConfirmText(e.target.value)}
+                            />
+                          </div>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Mégse</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-white hover:bg-destructive/90"
+                              onClick={handleClearAllData}
+                              disabled={confirmText !== "ELFOGADOM"}
+                            >
+                              Törlés
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* About Tab */}
+        {activeTab === "about" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div>
+              <h3 className="text-lg font-medium">Névjegy</h3>
+              <p className="text-sm text-muted-foreground">Információk az alkalmazásról.</p>
+            </div>
+            <Separator />
+            <div className="grid gap-6 sm:grid-cols-2">
+               <div className="space-y-1">
+                 <p className="text-sm font-medium">Verzió</p>
+                 <p className="text-sm text-muted-foreground">1.0.0 (Production)</p>
+               </div>
+               <div className="space-y-1">
+                 <p className="text-sm font-medium">Környezet</p>
+                 <p className="text-sm text-muted-foreground">{process.env.NODE_ENV === 'production' ? 'Production' : 'Development'}</p>
+               </div>
+               <div className="space-y-1">
+                 <p className="text-sm font-medium">Tech Stack</p>
+                 <p className="text-sm text-muted-foreground">Next.js 15, React 19, SQLite, Tailwind</p>
+               </div>
+               <div className="space-y-1">
+                 <p className="text-sm font-medium">Fejlesztő</p>
+                 <p className="text-sm text-muted-foreground">Gábor Sándor</p>
+               </div>
+            </div>
+            <div className="pt-4">
+              <p className="text-xs text-muted-foreground">
+                &copy; pry.hu - Hirdetés rendszerező
+              </p>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Hidden inputs / dialogs that are shared */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null
+          if (f) {
+            if (cropSrc) URL.revokeObjectURL(cropSrc)
+            openCropperWithFile(f)
+          }
+        }}
+      />
+
+      <Dialog open={cropOpen} onOpenChange={setCropOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Profilkép szerkesztése</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div
+              ref={setCropEl}
+              className="relative mx-auto size-64 overflow-hidden rounded-full bg-muted"
+              onMouseDown={(e) => {
+                setDragging(true)
+                setDragStart({ x: e.clientX, y: e.clientY })
+              }}
+              onMouseMove={(e) => {
+                if (!dragging || !dragStart) return
+                const dx = e.clientX - dragStart.x
+                const dy = e.clientY - dragStart.y
+                setOffset((o) => ({ x: o.x + dx, y: o.y + dy }))
+                setDragStart({ x: e.clientX, y: e.clientY })
+              }}
+              onMouseUp={() => {
+                setDragging(false)
+                setDragStart(null)
+              }}
+              onMouseLeave={() => {
+                setDragging(false)
+                setDragStart(null)
               }}
             >
-              <Button variant="destructive" size="sm">Kijelentkezés</Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
-      {/* Data Info */}
-      <Card className="border-border bg-card h-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Adatok
-          </CardTitle>
-          <CardDescription>Aktuális adatbázis állapot</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted p-4">
-              <p className="text-2xl font-bold">{partners.length}</p>
-              <p className="text-sm text-muted-foreground">Partner</p>
+              {cropSrc && (
+                <img
+                  src={cropSrc}
+                  alt="crop"
+                  className="absolute top-0 left-0 select-none max-w-none max-h-none"
+                  style={{ width: 'auto', height: 'auto', transformOrigin: 'top left', transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}
+                  draggable={false}
+                />
+              )}
             </div>
-            <div className="rounded-lg bg-muted p-4">
-              <p className="text-2xl font-bold">{ads.length}</p>
-              <p className="text-sm text-muted-foreground">Hirdetés</p>
+            <div className="flex items-center gap-2">
+              <label className="text-sm">Nagyítás</label>
+              <input
+                type="range"
+                min={0.1}
+                max={5}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="flex-1"
+              />
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">Adatok SQLite adatbázisban tárolva.</p>
-        </CardContent>
-      </Card>
-
-      {/* Data Management */}
-      {me?.role !== 'viewer' && (
-      <Card className="border-border bg-card h-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RotateCcw className="h-5 w-5" />
-            Adatkezelés
-          </CardTitle>
-          <CardDescription>Adatok visszaállítása vagy törlése</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start bg-transparent" 
-              onClick={() => importFileRef.current?.click()}
-              disabled={importing}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              {importing ? "Importálás..." : "Adatok importálása Excelből"}
-            </Button>
-            <input
-              type="file"
-              accept=".xlsx"
-              className="hidden"
-              ref={importFileRef}
-              onChange={handleImport}
-            />
-            <p className="text-xs text-muted-foreground">Új partnerek és hirdetések betöltése</p>
-          </div>
-          <div className="space-y-2">
-            <Button variant="outline" className="w-full justify-start bg-transparent" onClick={handleResetData}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Alapértelmezett adatok visszaállítása
-            </Button>
-            <p className="text-xs text-muted-foreground">Visszaállítja a mintaadatokat</p>
-          </div>
-          <div className="space-y-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  className="w-full justify-start"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Összes adat törlése
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Biztosan törlöd az összes adatot?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    A művelet nem vonható vissza. Minden partner és hirdetés törlődik.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-2 py-2">
-                  <p className="text-xs text-muted-foreground">Írd be: <span className="font-semibold">ELFOGADOM</span></p>
-                  <Input
-                    placeholder="ELFOGADOM"
-                    value={confirmText}
-                    onChange={(e) => setConfirmText(e.target.value)}
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Mégse</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-white hover:bg-destructive/90"
-                    onClick={handleClearAllData}
-                    disabled={confirmText !== "ELFOGADOM"}
-                  >
-                    Törlés
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <p className="text-xs text-muted-foreground">Törli az összes partnert és hirdetést</p>
-          </div>
-        </CardContent>
-      </Card>
-      )}
-
-      {/* Password Change */}
-      <Card className="border-border bg-card h-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5" />
-            Jelszó módosítás
-          </CardTitle>
-          <CardDescription>Jelenlegi jelszó ellenőrzése után új jelszó beállítása</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm">Jelenlegi jelszó</label>
-              <Input className="w-full" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm">Új jelszó</label>
-              <Input className="w-full" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm">Új jelszó megerősítése</label>
-              <Input className="w-full" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-            </div>
-            <Button onClick={handleChangePassword} disabled={changing} className="w-full">
-              {changing ? "Frissítés..." : "Jelszó frissítése"}
-            </Button>
-            <p className="text-xs text-muted-foreground">Minimum 8 karakter. Sikeres módosítás után a munkamenet megmarad.</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* App Info */}
-      <Card className="border-border bg-card lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5" />
-            Alkalmazás információ
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-sm font-medium">Verzió</p>
-              <p className="text-sm text-muted-foreground">1.0.0</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Framework</p>
-              <p className="text-sm text-muted-foreground">Next.js 15</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium">UI könyvtár</p>
-              <p className="text-sm text-muted-foreground">shadcn/ui</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <DialogFooter>
+            <Button onClick={handleSaveCropped} disabled={uploading}>{uploading ? "Mentés…" : "Mentés"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

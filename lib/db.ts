@@ -681,7 +681,14 @@ export function logActivity(userId: number | null, username: string, action: str
   stmt.run(userId, username, action, entityType, entityId, details)
 }
 
-export function getActivityLogs(limit = 100, offset = 0, filters?: { userId?: number, action?: string, entityType?: string }) {
+export function getActivityLogs(limit = 100, offset = 0, filters?: { 
+  userId?: number, 
+  action?: string, 
+  entityType?: string,
+  startDate?: string,
+  endDate?: string,
+  search?: string
+}) {
   const database = getDatabase()
   let query = `SELECT * FROM activity_logs WHERE 1=1`
   const params: any[] = []
@@ -697,6 +704,18 @@ export function getActivityLogs(limit = 100, offset = 0, filters?: { userId?: nu
   if (filters?.entityType && filters.entityType !== 'all') {
     query += ` AND entity_type = ?`
     params.push(filters.entityType)
+  }
+  if (filters?.startDate) {
+    query += ` AND created_at >= ?`
+    params.push(filters.startDate)
+  }
+  if (filters?.endDate) {
+    query += ` AND created_at <= ?`
+    params.push(filters.endDate)
+  }
+  if (filters?.search) {
+    query += ` AND details LIKE ?`
+    params.push(`%${filters.search}%`)
   }
 
   query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`

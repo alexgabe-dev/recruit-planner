@@ -8,6 +8,8 @@ import "./globals.css"
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
+import { ThemeProvider } from "@/components/theme-provider"
+
 export const metadata: Metadata = {
   title: "Hírdetéskezelő",
   description: "Manage marketing campaings or else.",

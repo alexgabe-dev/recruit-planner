@@ -9,9 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { format } from "date-fns"
 import { hu } from "date-fns/locale"
-import { Loader2, Download, Search, RefreshCw, Filter } from "lucide-react"
+import { Loader2, Download, Search, RefreshCw, Filter, CalendarIcon, X } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
+import { DateRange } from "react-day-picker"
 
 interface LogEntry {
   id: number
@@ -24,23 +28,42 @@ interface LogEntry {
   created_at: string
 }
 
+interface User {
+  id: number
+  username: string
+}
+
 export default function ActivityLogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
-    userId: "",
+    userId: "all",
     action: "all",
-    entityType: "all"
+    entityType: "all",
+    search: "",
+    date: undefined as DateRange | undefined
   })
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setUsers(data))
+      .catch(() => {})
+  }, [])
 
   const fetchLogs = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (filters.userId) params.append("userId", filters.userId)
+      if (filters.userId && filters.userId !== "all") params.append("userId", filters.userId)
       if (filters.action !== "all") params.append("action", filters.action)
       if (filters.entityType !== "all") params.append("entityType", filters.entityType)
-      params.append("limit", "100") // TODO: Implement pagination
+      if (filters.search) params.append("search", filters.search)
+      if (filters.date?.from) params.append("startDate", filters.date.from.toISOString())
+      if (filters.date?.to) params.append("endDate", filters.date.to.toISOString())
+      
+      params.append("limit", "100")
 
       const res = await fetch(`/api/admin/logs?${params.toString()}`)
       if (!res.ok) throw new Error("Failed to fetch logs")
@@ -56,10 +79,21 @@ export default function ActivityLogsPage() {
 
   useEffect(() => {
     fetchLogs()
-  }, []) // Initial load
+  }, []) 
 
   const handleSearch = () => {
     fetchLogs()
+  }
+
+  const handleReset = () => {
+    setFilters({
+      userId: "all",
+      action: "all",
+      entityType: "all",
+      search: "",
+      date: undefined
+    })
+    setTimeout(fetchLogs, 0)
   }
 
   const handleExport = () => {
@@ -105,7 +139,7 @@ export default function ActivityLogsPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 pt-14">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Tevékenységnapló</h1>
@@ -118,13 +152,75 @@ export default function ActivityLogsPage() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-lg font-medium">Szűrés</CardTitle>
             <CardDescription>Szűkítsd a találatokat a feltételek megadásával.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="grid gap-2 flex-1 w-full">
+            <div className="flex flex-wrap items-end gap-3">
+              {/* Date Range */}
+              <div className="grid gap-1.5 w-full md:w-[240px]">
+                <label className="text-sm font-medium">Időszak</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !filters.date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {filters.date?.from ? (
+                        filters.date.to ? (
+                          <>
+                            {format(filters.date.from, "yyyy. MM. dd.", { locale: hu })} -{" "}
+                            {format(filters.date.to, "yyyy. MM. dd.", { locale: hu })}
+                          </>
+                        ) : (
+                          format(filters.date.from, "yyyy. MM. dd.", { locale: hu })
+                        )
+                      ) : (
+                        <span>Válassz dátumot</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={filters.date?.from}
+                      selected={filters.date}
+                      onSelect={(date) => setFilters(prev => ({ ...prev, date }))}
+                      numberOfMonths={2}
+                      locale={hu}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* User */}
+              <div className="grid gap-1.5 flex-1 min-w-[140px]">
+                <label className="text-sm font-medium">Felhasználó</label>
+                <Select 
+                  value={filters.userId} 
+                  onValueChange={(v) => setFilters(prev => ({ ...prev, userId: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Összes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Összes</SelectItem>
+                    {users.map(u => (
+                      <SelectItem key={u.id} value={u.id.toString()}>{u.username}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Action */}
+              <div className="grid gap-1.5 flex-1 min-w-[140px]">
                 <label className="text-sm font-medium">Művelet</label>
                 <Select 
                   value={filters.action} 
@@ -144,7 +240,8 @@ export default function ActivityLogsPage() {
                 </Select>
               </div>
 
-              <div className="grid gap-2 flex-1 w-full">
+              {/* Entity Type */}
+              <div className="grid gap-1.5 flex-1 min-w-[140px]">
                 <label className="text-sm font-medium">Entitás Típus</label>
                 <Select 
                   value={filters.entityType} 
@@ -159,28 +256,32 @@ export default function ActivityLogsPage() {
                     <SelectItem value="partner">Partner</SelectItem>
                     <SelectItem value="ad">Hirdetés</SelectItem>
                     <SelectItem value="user">Felhasználó</SelectItem>
+                    <SelectItem value="invite">Meghívó</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="grid gap-2 flex-1 w-full">
-                 <label className="text-sm font-medium">Felhasználó ID</label>
-                 <Input 
-                    placeholder="pl. 1" 
-                    value={filters.userId}
-                    onChange={(e) => setFilters(prev => ({ ...prev, userId: e.target.value }))}
-                 />
+              {/* Search */}
+              <div className="grid gap-1.5 flex-[2] min-w-[200px]">
+                 <label className="text-sm font-medium">Keresés (részletekben)</label>
+                 <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Keresés..." 
+                        value={filters.search}
+                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                        className="pl-9"
+                    />
+                 </div>
               </div>
 
+              {/* Buttons */}
               <div className="flex gap-2">
                 <Button onClick={handleSearch} className="gap-2">
-                    <Search className="h-4 w-4" />
-                    Keresés
+                    <Filter className="h-4 w-4" />
+                    Szűrés
                 </Button>
-                <Button variant="ghost" onClick={() => {
-                    setFilters({ userId: "", action: "all", entityType: "all" })
-                    setTimeout(fetchLogs, 0)
-                }} size="icon" title="Alaphelyzet">
+                <Button variant="ghost" onClick={handleReset} size="icon" title="Alaphelyzet">
                     <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>

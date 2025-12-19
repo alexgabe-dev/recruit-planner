@@ -32,11 +32,16 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { TypeBadge } from "@/components/ui/type-badge"
 import { exportToExcel } from "@/lib/excel-export"
 import { toast } from "sonner"
-import { ArrowUpDown, Download, Search, Filter, Columns, MoreHorizontal, Pencil, Trash2, Plus, X, Ban } from "lucide-react"
+import { ArrowUpDown, Download, Search, Filter, Columns, MoreHorizontal, Pencil, Trash2, Plus, X, Ban, Calendar as CalendarIcon } from "lucide-react"
 import { AdFormDialog } from "./ad-form-dialog"
 import { DeleteAdDialog } from "./delete-ad-dialog"
 import { WarningDialog } from "./warning-dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { hu } from "date-fns/locale"
+import { DateRange } from "react-day-picker"
 
 type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
 
@@ -63,6 +68,7 @@ export function AdsTable() {
   const [partnerFilter, setPartnerFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 
   // Dialog states
   const [editingAd, setEditingAd] = useState<AdWithPartner | null>(null)
@@ -135,6 +141,20 @@ export function AdsTable() {
       if (partnerFilter !== "all" && ad.partner?.name !== partnerFilter) return false
       if (typeFilter !== "all" && ad.type !== typeFilter) return false
       if (statusFilter !== "all" && ad.status !== statusFilter) return false
+      
+      // Date range filter (Overlap logic)
+      if (dateRange?.from) {
+        const rangeStart = dateRange.from.getTime()
+        const rangeEnd = dateRange.to ? dateRange.to.getTime() : rangeStart
+        const adStart = new Date(ad.startDate).getTime()
+        const adEnd = new Date(ad.endDate).getTime()
+
+        // Check for overlap: (StartA <= EndB) and (EndA >= StartB)
+        if (!(adStart <= rangeEnd && adEnd >= rangeStart)) {
+          return false
+        }
+      }
+
       if (globalFilter) {
         const search = globalFilter.toLowerCase()
         return (
@@ -146,7 +166,7 @@ export function AdsTable() {
       }
       return true
     })
-  }, [data, officeFilter, partnerFilter, typeFilter, statusFilter, globalFilter])
+  }, [data, officeFilter, partnerFilter, typeFilter, statusFilter, globalFilter, dateRange])
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("hu-HU", {
@@ -412,14 +432,10 @@ export function AdsTable() {
     setTypeFilter("all")
     setStatusFilter("all")
     setGlobalFilter("")
+    setDateRange(undefined)
   }
 
-  const hasActiveFilters =
-    officeFilter !== "all" ||
-    partnerFilter !== "all" ||
-    typeFilter !== "all" ||
-    statusFilter !== "all" ||
-    globalFilter !== ""
+  const hasActiveFilters = officeFilter !== "all" || partnerFilter !== "all" || typeFilter !== "all" || statusFilter !== "all" || globalFilter !== "" || dateRange !== undefined
 
   return (
     <div className="space-y-4">
@@ -490,6 +506,34 @@ export function AdsTable() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn(
+                "h-10 w-10 shrink-0",
+                dateRange && "border-primary text-primary bg-primary/10"
+              )}
+              title={dateRange?.from ? (dateRange.to ? `${format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })} - ${format(dateRange.to, 'yyyy. MM. dd.', { locale: hu })}` : format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })) : "Időszak választása"}
+            >
+              <CalendarIcon className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              locale={hu}
+            />
+          </PopoverContent>
+        </Popover>
+
         <Select value={officeFilter} onValueChange={setOfficeFilter}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Iroda" />

@@ -22,8 +22,11 @@ export async function GET(req: Request) {
     const userId = searchParams.get("userId") ? Number(searchParams.get("userId")) : undefined
     const action = searchParams.get("action") || undefined
     const entityType = searchParams.get("entityType") || undefined
+    const startDate = searchParams.get("startDate") || undefined
+    const endDate = searchParams.get("endDate") || undefined
+    const search = searchParams.get("search") || undefined
 
-    const logs = getActivityLogs(limit, offset, { userId, action, entityType })
+    const logs = getActivityLogs(limit, offset, { userId, action, entityType, startDate, endDate, search })
     return NextResponse.json(logs)
   } catch (error) {
     console.error("Error fetching logs:", error)
