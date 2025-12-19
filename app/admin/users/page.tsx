@@ -226,7 +226,7 @@ export default function UsersPage() {
                             </TableCell>
                             <TableCell>
                                 {user.last_seen 
-                                    ? formatDistanceToNow(new Date(user.last_seen), { addSuffix: true, locale: hu }) 
+                                    ? format(new Date(user.last_seen), "yyyy. MM. dd. HH:mm", { locale: hu })
                                     : 'Soha'}
                             </TableCell>
                             <TableCell className="text-right">
