@@ -44,5 +44,5 @@ Thumbs.db
 *.tmp
 *.temp
 
-database.sqlitedatabase.sqlite
+database.sqlite
 public/uploads/
