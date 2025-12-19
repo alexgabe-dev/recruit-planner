@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getUserByUsername } from "@/lib/db"
+import { getUserByUsername, updateLastSeen, logActivity } from "@/lib/db"
 import bcrypt from "bcryptjs"
 import { SignJWT } from "jose"
 
@@ -36,6 +36,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Szerver konfigurációs hiba (AUTH_SECRET)" }, { status: 500 })
       }
     }
+
+    // Update last seen and log activity
+    updateLastSeen(user.id)
+    logActivity(user.id, user.username, 'login', 'auth', undefined, 'Sikeres bejelentkezés')
 
     const key = new TextEncoder().encode(secret || "dev-secret")
     const token = await new SignJWT({ sub: user.id, username: user.username, role: user.role || 'user' })

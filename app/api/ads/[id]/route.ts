@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { updateAd, deleteAd } from "@/lib/db"
+import { updateAd, deleteAd, logActivity } from "@/lib/db"
 import { getSession } from "@/lib/auth"
 import type { Ad } from "@/lib/types"
 export const runtime = "nodejs"
@@ -27,9 +27,34 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const updated = updateAd(id, updates, checkUserId)
     
     if (!updated) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })
+    
+    logActivity(session.userId, session.username, 'update', 'ad', id, `Hirdetés módosítva: ${updated.positionName}`)
+
     return NextResponse.json(updated)
   } catch {
     return NextResponse.json({ error: "Failed to update ad" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSession(request)
+    if (!session) return NextResponse.json({ error: "Nincs bejelentkezve" }, { status: 401 })
+    if (session.role === 'visitor') return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 })
+    
+    const { id: idParam } = await context.params
+    const id = Number(idParam)
+    
+    const checkUserId = session.role === 'admin' ? undefined : session.userId
+    const success = deleteAd(id, checkUserId)
+    
+    if (!success) return NextResponse.json({ error: "Not found or permission denied" }, { status: 404 })
+    
+    logActivity(session.userId, session.username, 'delete', 'ad', id, `Hirdetés törölve (ID: ${id})`)
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: "Failed to delete ad" }, { status: 500 })
   }
 }
 

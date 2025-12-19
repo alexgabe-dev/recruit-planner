@@ -1,38 +1,51 @@
 import { jwtVerify } from "jose"
 import { cookies } from "next/headers"
+import { updateLastSeen } from "./db"
 
 const COOKIE_NAME = "session"
 
 export async function getSession(req?: Request) {
+  let session = null
   // Try Next.js cookies() API first
   try {
     const c = await cookies()
     const fromCookies = c.get(COOKIE_NAME)?.value
     if (fromCookies) {
-      const session = await verifyToken(fromCookies)
-      if (session) return session
+      session = await verifyToken(fromCookies)
     }
   } catch {
     // ignore, fallback to header parsing
   }
 
-  if (!req) return null
+  if (!session && req) {
+    // Fallback: parse Cookie header
+    const cookie = req.headers.get("cookie") || ""
+    const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))
+    let token = match ? match[1] : undefined
 
-  // Fallback: parse Cookie header
-  const cookie = req.headers.get("cookie") || ""
-  const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))
-  let token = match ? match[1] : undefined
-
-  // Also allow Authorization: Bearer <token>
-  if (!token) {
-    const auth = req.headers.get("authorization") || req.headers.get("Authorization") || ""
-    const m = auth.match(/^Bearer\s+(.+)$/)
-    if (m) token = m[1]
+    // Also allow Authorization: Bearer <token>
+    if (!token) {
+      const auth = req.headers.get("authorization") || req.headers.get("Authorization") || ""
+      const m = auth.match(/^Bearer\s+(.+)$/)
+      if (m) token = m[1]
+    }
+    if (token) {
+      const secret = process.env.AUTH_SECRET || "dev-secret"
+      const key = new TextEncoder().encode(secret)
+      session = await verifyToken(token, key)
+    }
   }
-  if (!token) return null
-  const secret = process.env.AUTH_SECRET || "dev-secret"
-  const key = new TextEncoder().encode(secret)
-  return verifyToken(token, key)
+
+  if (session) {
+    try {
+      updateLastSeen(session.userId)
+    } catch (e) {
+      // Ignore DB errors during session check to prevent blocking
+      console.error("Failed to update last seen:", e)
+    }
+    return session
+  }
+  return null
 }
 
 async function verifyToken(token: string, key?: Uint8Array) {

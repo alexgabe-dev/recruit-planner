@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/auth"
-import { updateUser, deleteUser } from "@/lib/db"
+import { updateUser, deleteUser, logActivity } from "@/lib/db"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -26,6 +26,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const success = updateUser(userId, { role, status })
     if (!success) return NextResponse.json({ error: "Nem sikerült frissíteni" }, { status: 404 })
+    
+    logActivity(session.userId, session.username, 'update', 'user', userId, `Felhasználó módosítva (ID: ${userId}) - Role: ${role}, Status: ${status}`)
 
     return NextResponse.json({ success: true })
   } catch (e) {
@@ -48,6 +50,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     const success = deleteUser(userId)
     if (!success) return NextResponse.json({ error: "Nem sikerült törölni" }, { status: 404 })
+    
+    logActivity(session.userId, session.username, 'delete', 'user', userId, `Felhasználó törölve (ID: ${userId})`)
 
     return NextResponse.json({ success: true })
   } catch (e) {

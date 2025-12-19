@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Table2, Building2, Settings, ChevronLeft, ChevronRight, Megaphone, Users } from "lucide-react"
+import { LayoutDashboard, Table2, Building2, Settings, ChevronLeft, ChevronRight, Megaphone, Users, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import SplitText from "@/components/SplitText"
@@ -52,6 +52,7 @@ export function Sidebar() {
   if (me?.role === 'admin') {
     displayedNavItems.push({ href: "/admin/users", label: "Felhasználók", icon: Users })
     displayedNavItems.push({ href: "/admin/notifications", label: "Értesítések", icon: Megaphone })
+    displayedNavItems.push({ href: "/admin/logs", label: "Napló", icon: ClipboardList })
   }
 
   return (

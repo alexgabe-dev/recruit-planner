@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getAllAds, createAd } from "@/lib/db"
+import { getAllAds, createAd, logActivity } from "@/lib/db"
 import { getSession } from "@/lib/auth"
 import type { Ad } from "@/lib/types"
 export const runtime = "nodejs"
@@ -36,6 +36,16 @@ export async function POST(request: Request) {
       partnerId: Number(body.partnerId),
     }
     const created = createAd(payload, session.userId)
+    
+    logActivity(
+      session.userId, 
+      session.username, 
+      'create', 
+      'ad', 
+      created.id, 
+      `Hirdetés létrehozva: ${created.positionName} (${created.type})`
+    )
+    
     return NextResponse.json(created, { status: 201 })
   } catch (e) {
     console.error("Error creating ad:", e)

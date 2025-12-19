@@ -100,6 +100,21 @@ export function initializeDatabase() {
     )
   `)
 
+  // Create activity logs table
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS activity_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      username TEXT,
+      action TEXT NOT NULL,
+      entity_type TEXT,
+      entity_id INTEGER,
+      details TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    )
+  `)
+
   // Ensure new columns exist on older databases
   const columns = database.prepare("PRAGMA table_info(users)").all() as { name: string }[]
   const have = new Set(columns.map((c) => c.name))
@@ -513,7 +528,7 @@ export function setAvatarUrl(userId: number, url: string): void {
 
 export function updateLastSeen(userId: number): void {
   const database = getDatabase()
-  database.prepare('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?').run(userId)
+  database.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(new Date().toISOString(), userId)
 }
 
 export function listUsers(): { id: number; username: string; display_name: string | null; role: string | null; last_seen: string | null; email: string | null; status: string | null }[] {
@@ -632,4 +647,38 @@ export function getAllExpiringAds(days: number = 7, types: string[] = []) {
       office: row.partner_office
     }
   }))
+}
+
+// Activity Logging
+export function logActivity(userId: number | null, username: string, action: string, entityType: string, entityId?: number, details?: string) {
+  const database = getDatabase()
+  const stmt = database.prepare(`
+    INSERT INTO activity_logs (user_id, username, action, entity_type, entity_id, details)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  stmt.run(userId, username, action, entityType, entityId, details)
+}
+
+export function getActivityLogs(limit = 100, offset = 0, filters?: { userId?: number, action?: string, entityType?: string }) {
+  const database = getDatabase()
+  let query = `SELECT * FROM activity_logs WHERE 1=1`
+  const params: any[] = []
+
+  if (filters?.userId) {
+    query += ` AND user_id = ?`
+    params.push(filters.userId)
+  }
+  if (filters?.action && filters.action !== 'all') {
+    query += ` AND action = ?`
+    params.push(filters.action)
+  }
+  if (filters?.entityType && filters.entityType !== 'all') {
+    query += ` AND entity_type = ?`
+    params.push(filters.entityType)
+  }
+
+  query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  params.push(limit, offset)
+
+  return database.prepare(query).all(...params) as any[]
 }
