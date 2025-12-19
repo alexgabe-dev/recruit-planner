@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import Orb from "@/components/Orb"
 import { CheckCircle2, User, Mail, Lock, Loader2, ArrowLeft } from "lucide-react"
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [username, setUsername] = useState("")
