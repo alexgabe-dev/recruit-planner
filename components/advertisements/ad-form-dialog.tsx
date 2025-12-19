@@ -81,15 +81,20 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
     }
   }, [ad, mode, form, partners])
 
-  const onSubmit = (data: FormData) => {
-    if (mode === "create") {
-      addAd(data)
-      toast.success("Hirdetés sikeresen létrehozva!")
-    } else if (ad) {
-      updateAd(ad.id, data)
-      toast.success("Hirdetés sikeresen frissítve!")
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (mode === "create") {
+        await addAd(data)
+        toast.success("Hirdetés sikeresen létrehozva!")
+      } else if (ad) {
+        await updateAd(ad.id, data)
+        toast.success("Hirdetés sikeresen frissítve!")
+      }
+      onOpenChange(false)
+    } catch (error) {
+      toast.error("Hiba történt a mentés során")
+      console.error(error)
     }
-    onOpenChange(false)
   }
 
   return (

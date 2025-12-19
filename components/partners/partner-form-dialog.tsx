@@ -51,15 +51,20 @@ export function PartnerFormDialog({ open, onOpenChange, mode, partner }: Partner
     }
   }, [partner, mode, form])
 
-  const onSubmit = (data: FormData) => {
-    if (mode === "create") {
-      addPartner(data)
-      toast.success("Partner sikeresen létrehozva!")
-    } else if (partner) {
-      updatePartner(partner.id, data)
-      toast.success("Partner sikeresen frissítve!")
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (mode === "create") {
+        await addPartner(data)
+        toast.success("Partner sikeresen létrehozva!")
+      } else if (partner) {
+        await updatePartner(partner.id, data)
+        toast.success("Partner sikeresen frissítve!")
+      }
+      onOpenChange(false)
+    } catch (error) {
+      toast.error("Hiba történt a mentés során")
+      console.error(error)
     }
-    onOpenChange(false)
   }
 
   return (

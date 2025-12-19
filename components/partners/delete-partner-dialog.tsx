@@ -25,10 +25,15 @@ export function DeletePartnerDialog({ open, onOpenChange, partner }: DeletePartn
 
   const partnerAds = ads.filter((ad) => ad.partnerId === partner.id)
 
-  const handleDelete = () => {
-    deletePartner(partner.id)
-    toast.success("Partner sikeresen törölve!")
-    onOpenChange(false)
+  const handleDelete = async () => {
+    try {
+      await deletePartner(partner.id)
+      toast.success("Partner sikeresen törölve!")
+      onOpenChange(false)
+    } catch (e) {
+      toast.error("Hiba történt a törlés során")
+      console.error(e)
+    }
   }
 
   return (

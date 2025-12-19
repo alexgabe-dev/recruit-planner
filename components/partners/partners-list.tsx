@@ -189,7 +189,7 @@ export function PartnersList() {
                         {(() => {
                           const isVisitor = me?.role === 'visitor' || me?.role === 'viewer'
                           const canEdit = me?.role === 'admin' || me?.role === 'user'
-                          const canDelete = me?.role === 'admin'
+                          const canDelete = me?.role === 'admin' || me?.role === 'user'
 
                           if (!canEdit && !canDelete) return null
 
