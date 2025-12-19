@@ -596,7 +596,7 @@ export function saveSystemSettings(settings: Record<string, any>) {
   transaction()
 }
 
-export function getExpiringAdsForUser(userId: number, days: number = 7, types: string[] = []) {
+export function getAllExpiringAds(days: number = 7, types: string[] = []) {
   const database = getDatabase()
   const today = new Date().toISOString().split('T')[0]
   const future = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -605,8 +605,7 @@ export function getExpiringAdsForUser(userId: number, days: number = 7, types: s
     SELECT a.*, p.name as partner_name, p.office as partner_office 
     FROM ads a
     JOIN partners p ON a.partner_id = p.id
-    WHERE a.user_id = ? 
-    AND a.is_active = 1 
+    WHERE a.is_active = 1 
     AND a.end_date >= ? 
     AND a.end_date <= ?
   `
@@ -619,7 +618,7 @@ export function getExpiringAdsForUser(userId: number, days: number = 7, types: s
   query += ` ORDER BY a.end_date ASC`
   
   const stmt = database.prepare(query)
-  const args = [userId, today, future, ...types]
+  const args = [today, future, ...types]
   
   const rows = stmt.all(...args) as any[]
   

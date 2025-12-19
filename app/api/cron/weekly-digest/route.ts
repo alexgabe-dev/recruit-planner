@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getSystemSettings, listUsers, getExpiringAdsForUser } from "@/lib/db"
+import { getSystemSettings, listUsers, getAllExpiringAds } from "@/lib/db"
 import { getSession } from "@/lib/auth"
 import { sendMail, weeklyDigestEmail } from "@/lib/email"
 
@@ -33,6 +33,14 @@ export async function POST(request: Request) {
     const startStr = today.toLocaleDateString('hu-HU')
     const endStr = nextWeek.toLocaleDateString('hu-HU')
 
+    // 1. Get ALL expiring ads for the next 7 days matching criteria
+    const allAds = getAllExpiringAds(7, types)
+
+    if (allAds.length === 0) {
+      return NextResponse.json({ skipped: true, reason: "No expiring ads found" })
+    }
+
+    // 2. Determine recipients
     let users = []
     if (body.userId) {
       // Manual test for specific user
@@ -40,34 +48,29 @@ export async function POST(request: Request) {
       const target = allUsers.find(u => u.id === Number(body.userId))
       if (target) users.push(target)
     } else {
-      // Bulk send
+      // Bulk send to ALL active users with email
       users = listUsers().filter(u => u.status === 'active' && u.email)
     }
 
     const results = {
-      total: users.length,
+      totalRecipients: users.length,
+      totalAds: allAds.length,
       sent: 0,
       skipped: 0,
       failed: 0,
       errors: [] as string[]
     }
 
+    // 3. Send the SAME list to everyone
     for (const user of users) {
       if (!user.email) {
         results.skipped++
         continue
       }
 
-      const ads = getExpiringAdsForUser(user.id, 7, types)
-      
-      if (ads.length === 0) {
-        results.skipped++
-        continue
-      }
-
       const emailData = weeklyDigestEmail({
         to: user.email,
-        ads,
+        ads: allAds, // Everyone gets the full list
         start: startStr,
         end: endStr
       })
