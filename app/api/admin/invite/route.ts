@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/auth"
 import { createInvite, logActivity } from "@/lib/db"
-import { sendMail } from "@/lib/email"
+import { sendMail, inviteEmail } from "@/lib/email"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
