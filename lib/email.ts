@@ -72,7 +72,7 @@ function generateEmailHtml({ title, content, buttonText, buttonUrl }: { title: s
 
     <!-- Footer -->
     <div style="${styles.footer}">
-      <p style="margin: 0;">© ${new Date().getFullYear()} Készítette Gábor Sándor. Minden jog fenntartva.</p>
+      <p style="margin: 0;">© ${new Date().getFullYear()} Készítette Gábor Sándor - 2025</p>
       <p style="margin: 8px 0 0;">Ez egy automatikus üzenet, kérjük ne válaszolj rá.</p>
     </div>
   </div>
