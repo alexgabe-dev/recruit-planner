@@ -732,7 +732,9 @@ export function createInvite(email: string, role: string, createdBy: number, exp
 
 export function getInviteByToken(token: string): Invite | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT * FROM invites WHERE token = ? AND used_at IS NULL AND expires_at > datetime("now")')
+  // Use 'now' in single quotes for SQLite datetime function string literal
+  // Also wrap expires_at in datetime() to ensure correct comparison with ISO strings
+  const stmt = database.prepare("SELECT * FROM invites WHERE token = ? AND used_at IS NULL AND datetime(expires_at) > datetime('now')")
   const invite = stmt.get(token) as Invite | undefined
   return invite ?? null
 }

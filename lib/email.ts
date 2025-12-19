@@ -101,6 +101,28 @@ export async function sendMail({ to, subject, html }: MailOptions) {
   }
 }
 
+export function inviteEmail({ to, inviteLink, inviterName, role }: { to: string; inviteLink: string; inviterName: string; role: string }) {
+  const content = `
+    <p style="${styles.text}"><strong>${inviterName}</strong> meghívott, hogy csatlakozz a Hirdetéskezelő rendszerhez.</p>
+    <div style="${styles.detailBox}">
+      <p style="${styles.detailRow}"><strong>Jogosultság:</strong> ${role}</p>
+      <p style="${styles.detailRow}"><strong>Érvényesség:</strong> 15 perc</p>
+    </div>
+    <p style="${styles.text}">A regisztrációhoz kattints az alábbi gombra:</p>
+  `
+
+  return {
+    to,
+    subject: 'Meghívó a Hirdetéskezelő rendszerbe',
+    html: generateEmailHtml({
+      title: 'Meghívó érkezett',
+      content,
+      buttonText: 'Regisztráció',
+      buttonUrl: inviteLink
+    })
+  }
+}
+
 export function approvalEmail({ username, email, approveUrl }: { username: string; email: string; approveUrl: string }) {
   const content = `
     <p style="${styles.text}">Új felhasználói regisztráció érkezett, amely jóváhagyásra vár.</p>
