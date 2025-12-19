@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
-import { createPendingUser, getUserByUsername } from '@/lib/db'
+import { createPendingUser, getUserByUsername, getInviteByToken, updateUser, markInviteUsed } from '@/lib/db'
 import { approvalEmail, sendMail } from '@/lib/email'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { username, email, password } = body as { username?: string; email?: string; password?: string }
+    const { username, email, password, inviteToken } = body as { username?: string; email?: string; password?: string; inviteToken?: string }
     if (!username || !email || !password) {
       return NextResponse.json({ error: 'Hiányzó adatok' }, { status: 400 })
     }

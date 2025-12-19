@@ -248,7 +248,11 @@ export function AdsTable() {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <span className="font-medium">{row.getValue("positionName")}</span>,
+      cell: ({ row }) => (
+        <div className="max-w-[200px] truncate font-medium" title={row.getValue("positionName")}>
+          {row.getValue("positionName")}
+        </div>
+      ),
     },
     {
       id: "adContent",
