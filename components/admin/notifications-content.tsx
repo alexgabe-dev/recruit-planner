@@ -6,26 +6,33 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Loader2, Send } from "lucide-react"
+import { Loader2, Send, Plus, Trash2, Mail } from "lucide-react"
 
 export function NotificationsContent() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
-  
+
   // Settings
   const [enabled, setEnabled] = useState(false)
   const [types, setTypes] = useState<string[]>(["kampány", "Profession", "kiemelt post"])
-  
+
   // Test Send
   const [users, setUsers] = useState<any[]>([])
   const [selectedUser, setSelectedUser] = useState<string>("")
 
+  // Extra Emails
+  const [extraEmails, setExtraEmails] = useState<string[]>([])
+  const [newEmail, setNewEmail] = useState("")
+  const [addingEmail, setAddingEmail] = useState(false)
+
   useEffect(() => {
     fetchSettings()
     fetchUsers()
+    fetchExtraEmails()
   }, [])
 
   const fetchSettings = async () => {
@@ -52,7 +59,64 @@ export function NotificationsContent() {
         const data = await res.json()
         setUsers(data.filter((u: any) => u.status === 'active' && u.email))
       }
-    } catch {}
+    } catch { }
+  }
+
+  const fetchExtraEmails = async () => {
+    try {
+      const res = await fetch("/api/admin/notifications")
+      if (res.ok) {
+        const data = await res.json()
+        setExtraEmails(data.emails || [])
+      }
+    } catch { }
+  }
+
+  const handleAddEmail = async () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast.error("Érvényes email címet adj meg")
+      return
+    }
+
+    setAddingEmail(true)
+    try {
+      const res = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setExtraEmails(data.emails)
+        setNewEmail("")
+        toast.success("Email cím hozzáadva")
+      } else {
+        throw new Error()
+      }
+    } catch {
+      toast.error("Hiba a hozzáadás során")
+    } finally {
+      setAddingEmail(false)
+    }
+  }
+
+  const handleRemoveEmail = async (email: string) => {
+    try {
+      const res = await fetch(`/api/admin/notifications?email=${encodeURIComponent(email)}`, {
+        method: "DELETE"
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setExtraEmails(data.emails)
+        toast.success("Email cím eltávolítva")
+      } else {
+        throw new Error()
+      }
+    } catch {
+      toast.error("Hiba az eltávolítás során")
+    }
   }
 
   const handleSave = async () => {
@@ -66,7 +130,7 @@ export function NotificationsContent() {
           weekly_digest_types: types
         })
       })
-      
+
       if (res.ok) {
         toast.success("Beállítások mentve")
       } else {
@@ -94,7 +158,7 @@ export function NotificationsContent() {
       })
 
       const data = await res.json()
-      
+
       if (res.ok) {
         if (data.sent > 0) {
           toast.success(`Teszt levél elküldve (${data.sent} db)`)
@@ -114,8 +178,8 @@ export function NotificationsContent() {
   }
 
   const toggleType = (type: string) => {
-    setTypes(prev => 
-      prev.includes(type) 
+    setTypes(prev =>
+      prev.includes(type)
         ? prev.filter(t => t !== type)
         : [...prev, type]
     )
@@ -140,8 +204,8 @@ export function NotificationsContent() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center space-x-2">
-            <Switch 
-              id="weekly-digest" 
+            <Switch
+              id="weekly-digest"
               checked={enabled}
               onCheckedChange={setEnabled}
             />
@@ -153,8 +217,8 @@ export function NotificationsContent() {
             <div className="grid gap-2">
               {["kampány", "Profession", "kiemelt post"].map((type) => (
                 <div key={type} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`type-${type}`} 
+                  <Checkbox
+                    id={`type-${type}`}
                     checked={types.includes(type)}
                     onCheckedChange={() => toggleType(type)}
                   />
@@ -168,6 +232,53 @@ export function NotificationsContent() {
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Beállítások mentése
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Extra címzettek
+          </CardTitle>
+          <CardDescription>
+            Adj hozzá további email címeket, akik szintén megkapják a heti összesítőt (pl. külső partnerek).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="pelda@email.hu"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
+              className="flex-1"
+            />
+            <Button onClick={handleAddEmail} disabled={addingEmail || !newEmail}>
+              {addingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {extraEmails.length > 0 ? (
+            <div className="space-y-2">
+              {extraEmails.map((email) => (
+                <div key={email} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                  <span className="text-sm">{email}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => handleRemoveEmail(email)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nincs hozzáadott extra címzett.</p>
+          )}
         </CardContent>
       </Card>
 

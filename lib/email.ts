@@ -35,7 +35,7 @@ const styles = {
 
 function generateEmailHtml({ title, content, buttonText, buttonUrl }: { title: string, content: string, buttonText?: string, buttonUrl?: string }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  
+
   return `
 <!DOCTYPE html>
 <html>
@@ -84,14 +84,14 @@ function generateEmailHtml({ title, content, buttonText, buttonUrl }: { title: s
 export async function sendMail({ to, subject, html }: MailOptions) {
   const transporter = getTransport()
   const from = process.env.MAIL_FROM || 'Recruit Planner <noreply@local>'
-  
+
   if (!transporter) {
     console.log('[MAIL:FALLBACK] To:', to)
     console.log('[MAIL:FALLBACK] Subject:', subject)
     console.log('[MAIL:FALLBACK] HTML Preview (first 100 chars):', html.substring(0, 100))
     return { success: true, fallback: true }
   }
-  
+
   try {
     await transporter.sendMail({ from, to, subject, html })
     return { success: true }
@@ -132,7 +132,7 @@ export function approvalEmail({ username, email, approveUrl }: { username: strin
     </div>
     <p style="${styles.text}">A fiók aktiválásához kattints az alábbi gombra:</p>
   `
-  
+
   return {
     to: process.env.ADMIN_EMAIL || 'gabor.sandor@vizizor.hu',
     subject: 'Új regisztráció jóváhagyása',
@@ -186,7 +186,9 @@ export function warningEmail({ to, message, senderName, sentAt }: { to: string; 
 }
 
 export function weeklyDigestEmail({ to, ads, start, end }: { to: string; ads: any[]; start: string; end: string }) {
-  const adRows = ads.map(ad => `
+  const hasAds = ads.length > 0
+
+  const adRows = hasAds ? ads.map(ad => `
     <div style="background-color: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
       <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">${ad.positionName}</div>
       <div style="font-size: 14px; color: #64748b; margin-bottom: 4px;">
@@ -197,21 +199,24 @@ export function weeklyDigestEmail({ to, ads, start, end }: { to: string; ads: an
         Lejárat: ${new Date(ad.endDate).toLocaleDateString('hu-HU')}
       </div>
     </div>
-  `).join('')
+  `).join('') : ''
 
-  const content = `
+  const content = hasAds ? `
     <p style="${styles.text}">Az alábbi hirdetések járnak le ezen a héten (${start} - ${end}):</p>
     <div style="${styles.detailBox}">
       ${adRows}
     </div>
     <p style="${styles.text}">Kérjük, ellenőrizd a hirdetéseket és hosszabbítsd meg őket, ha szükséges.</p>
+  ` : `
+    <p style="${styles.text}">Ezen a héten (${start} - ${end}) nincs lejáró hirdetés a rendszerben.</p>
+    <p style="${styles.text}">Jelenleg minden rendben van.</p>
   `
 
   return {
     to,
-    subject: 'Heti hirdetés emlékeztető',
+    subject: hasAds ? `Heti hirdetés emlékeztető (${ads.length} db)` : 'Heti hirdetés emlékeztető (Nincs lejáró)',
     html: generateEmailHtml({
-      title: 'Lejáró hirdetések',
+      title: hasAds ? 'Lejáró hirdetések' : 'Heti összesítő',
       content,
       buttonText: 'Hirdetések megtekintése',
       buttonUrl: (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000') + '/advertisements'

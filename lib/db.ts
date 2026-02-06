@@ -649,6 +649,25 @@ export function saveSystemSettings(settings: Record<string, any>) {
   transaction()
 }
 
+export function getNotificationEmails(): string[] {
+  const settings = getSystemSettings()
+  return (settings.notification_emails as string[]) || []
+}
+
+export function addNotificationEmail(email: string) {
+  const settings = getSystemSettings()
+  const emails = (settings.notification_emails as string[]) || []
+  if (!emails.includes(email)) {
+    saveSystemSettings({ ...settings, notification_emails: [...emails, email] })
+  }
+}
+
+export function removeNotificationEmail(email: string) {
+  const settings = getSystemSettings()
+  const emails = (settings.notification_emails as string[]) || []
+  saveSystemSettings({ ...settings, notification_emails: emails.filter(e => e !== email) })
+}
+
 export function getAllExpiringAds(days: number = 7, types: string[] = []) {
   const database = getDatabase()
   const today = new Date().toISOString().split('T')[0]
