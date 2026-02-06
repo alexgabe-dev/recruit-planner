@@ -362,12 +362,12 @@ export function AdsTable() {
           return priorityA - priorityB
         }
 
-        // Secondary sort: Start Date Ascending (Earliest first)
-        // This ensures within "Active", the ones starting earliest are at the top
+        // Secondary sort: Start Date Descending (Newest first)
+        // This ensures within "Active", the ones starting latest are at the top
         const dateA = new Date(rowA.original.startDate).getTime()
         const dateB = new Date(rowB.original.startDate).getTime()
 
-        return dateA - dateB
+        return dateB - dateA
       },
     },
     {
