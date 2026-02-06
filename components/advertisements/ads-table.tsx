@@ -11,6 +11,7 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
+  type RowSelectionState,
 } from "@tanstack/react-table"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -39,8 +40,8 @@ import { WarningDialog } from "./warning-dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { hu } from "date-fns/locale"
+import { format } from "date-fns/format"
+import { hu } from "date-fns/locale/hu"
 import { DateRange } from "react-day-picker"
 
 type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
@@ -49,7 +50,8 @@ export function AdsTable() {
   const { ads, partners, updateAd, deleteAd } = useStore()
   const [role, setRole] = useState<string | null>(null)
   const [me, setMe] = useState<any>(null)
-  const [sorting, setSorting] = useState<SortingState>([])
+  // Default sorting: Status (Active first), which effectively uses our custom logic below
+  const [sorting, setSorting] = useState<SortingState>([{ id: "status", desc: false }])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ select: false })
 
@@ -59,7 +61,7 @@ export function AdsTable() {
       setColumnVisibility(prev => ({ ...prev, select: false }))
     }
   }, [role])
-  const [rowSelection, setRowSelection] = useState({})
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState<number | null>(null)
   const [globalFilter, setGlobalFilter] = useState("")
 
@@ -86,14 +88,14 @@ export function AdsTable() {
   }, [ads, partners])
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: 'no-store' })
         if (!res.ok) return
         const data = await res.json()
         setMe(data)
         setRole(data.role === 'visitor' ? 'viewer' : data.role)
-      } catch {}
+      } catch { }
     })()
   }, [])
 
@@ -141,7 +143,7 @@ export function AdsTable() {
       if (partnerFilter !== "all" && ad.partner?.name !== partnerFilter) return false
       if (typeFilter !== "all" && ad.type !== typeFilter) return false
       if (statusFilter !== "all" && ad.status !== statusFilter) return false
-      
+
       // Date range filter (Overlap logic)
       if (dateRange?.from) {
         const rangeStart = dateRange.from.getTime()
@@ -345,7 +347,7 @@ export function AdsTable() {
       sortingFn: (rowA, rowB, columnId) => {
         const statusA = rowA.getValue(columnId) as string
         const statusB = rowB.getValue(columnId) as string
-        
+
         // Priority: Aktív (0) > Időzített (1) > Lejárt (2)
         const getPriority = (s: string) => {
           if (s === "Aktív") return 0
@@ -356,17 +358,16 @@ export function AdsTable() {
 
         const priorityA = getPriority(statusA)
         const priorityB = getPriority(statusB)
-
         if (priorityA !== priorityB) {
           return priorityA - priorityB
         }
 
-        // Secondary sort: End Date Descending (Latest first)
-        // Note: This secondary sort direction will flip if the column sort is toggled to DESC
-        const dateA = new Date(rowA.original.endDate).getTime()
-        const dateB = new Date(rowB.original.endDate).getTime()
-        
-        return dateB - dateA
+        // Secondary sort: Start Date Ascending (Earliest first)
+        // This ensures within "Active", the ones starting earliest are at the top
+        const dateA = new Date(rowA.original.startDate).getTime()
+        const dateB = new Date(rowB.original.startDate).getTime()
+
+        return dateA - dateB
       },
     },
     {
@@ -671,18 +672,18 @@ export function AdsTable() {
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <Button 
-          variant="secondary" 
-          size="sm" 
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => handleBulkStatusChange(false)}
           className="text-orange-600 hover:text-orange-700"
         >
           <Ban className="mr-2 h-4 w-4" />
           Lezárás
         </Button>
-        <Button 
-          variant="destructive" 
-          size="sm" 
+        <Button
+          variant="destructive"
+          size="sm"
           onClick={() => setIsBulkDeleteOpen(true)}
         >
           <Trash2 className="mr-2 h-4 w-4" />

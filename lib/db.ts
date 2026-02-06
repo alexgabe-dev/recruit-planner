@@ -9,8 +9,24 @@ export function getDatabase(): Database.Database {
   if (!db) {
     // Singleton across HMR/route reloads
     if (!globalForDb.__recruit_db) {
-      const defaultPath = path.join(process.cwd(), 'database.sqlite')
-      const dbPath = process.env.DATABASE_PATH || defaultPath
+      let dbPath: string;
+
+      // Force local database for seeded development environment
+      if (process.env.NODE_ENV === 'development' && process.env.SEED_SAMPLE_DATA === 'true') {
+        console.warn('⚠️  [DB] Forcing local database because NODE_ENV=development and SEED_SAMPLE_DATA=true')
+        dbPath = path.join(process.cwd(), 'database.sqlite')
+      } else {
+        const defaultPath = path.join(process.cwd(), 'database.sqlite')
+        dbPath = process.env.DATABASE_PATH || defaultPath
+
+        // Fix for Windows development using Linux paths in .env (only if not forced above)
+        if (process.platform === 'win32' && dbPath.startsWith('/') && !dbPath.match(/^[a-zA-Z]:/)) {
+          console.warn('⚠️  [DB] Custom logic: Detected Windows environment with Linux-style path in .env')
+          console.warn(`⚠️  [DB] Ignoring DATABASE_PATH="${dbPath}" and falling back to default: "${defaultPath}"`)
+          dbPath = defaultPath
+        }
+      }
+
       console.log('----------------------------------------')
       console.log('[DB] Initializing database connection')
       console.log('[DB] Target Path:', dbPath)
@@ -26,13 +42,13 @@ export function getDatabase(): Database.Database {
     }
     db = globalForDb.__recruit_db!
   }
-  
+
   return db
 }
 
 export function initializeDatabase() {
   const database = getDatabase()
-  
+
   // Create partners table
   database.exec(`
     CREATE TABLE IF NOT EXISTS partners (
@@ -45,7 +61,7 @@ export function initializeDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `)
-  
+
   // Create ads table
   database.exec(`
     CREATE TABLE IF NOT EXISTS ads (
@@ -64,7 +80,7 @@ export function initializeDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `)
-  
+
   // Create indexes for better performance (basic indexes that don't depend on migrations)
   database.exec(`
     CREATE INDEX IF NOT EXISTS idx_ads_partner_id ON ads(partner_id);
@@ -185,7 +201,7 @@ export function initializeDatabase() {
         FROM ads_old
       `)
       database.exec("DROP TABLE ads_old")
-      
+
       // Recreate indexes
       database.exec("CREATE INDEX IF NOT EXISTS idx_ads_partner_id ON ads(partner_id)")
       database.exec("CREATE INDEX IF NOT EXISTS idx_ads_dates ON ads(start_date, end_date)")
@@ -217,7 +233,7 @@ export function createPartner(partner: Omit<Partner, 'id'>, userId: number): Par
     INSERT INTO partners (name, office, user_id) VALUES (?, ?, ?)
   `)
   const result = stmt.run(partner.name, partner.office, userId)
-  
+
   return {
     id: result.lastInsertRowid as number,
     ...partner,
@@ -229,7 +245,7 @@ export function updatePartner(id: number, partner: Partial<Omit<Partner, 'id'>>,
   const database = getDatabase()
   const fields = Object.keys(partner).map(key => `${key} = ?`).join(', ')
   const values = Object.values(partner)
-  
+
   let stmt;
   if (userId) {
     stmt = database.prepare(`
@@ -243,7 +259,7 @@ export function updatePartner(id: number, partner: Partial<Omit<Partner, 'id'>>,
     `)
     stmt.run(...values, id)
   }
-  
+
   return getPartnerById(id)
 }
 
@@ -268,10 +284,10 @@ export function getAllAds(userId?: number): (Ad & { partner: Partner })[] {
     SELECT a.*, p.name as partner_name, p.office as partner_office, p.user_id as partner_user_id
     FROM ads a
     JOIN partners p ON a.partner_id = p.id
-    ORDER BY a.created_at DESC
+    ORDER BY a.is_active DESC, a.start_date ASC
   `)
   const rows = stmt.all() as any[]
-  
+
   return rows.map(row => ({
     id: row.id,
     positionName: row.position_name,
@@ -301,9 +317,9 @@ export function getAdById(id: number): (Ad & { partner: Partner }) | null {
     WHERE a.id = ?
   `)
   const row = stmt.get(id) as any
-  
+
   if (!row) return null
-  
+
   return {
     id: row.id,
     positionName: row.position_name,
@@ -340,7 +356,7 @@ export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>, userId: number): Ad {
     ad.partnerId,
     userId
   )
-  
+
   const createdAd = getAdById(result.lastInsertRowid as number)
   if (!createdAd) throw new Error('Failed to create ad')
   return createdAd
@@ -357,7 +373,7 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, 
     if (key === 'partnerId') return 'partner_id = ?'
     return `${key} = ?`
   }).join(', ')
-  
+
   const values = Object.entries(ad).map(([key, value]) => {
     if (key === 'startDate' || key === 'endDate') {
       return (value as Date).toISOString()
@@ -367,7 +383,7 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, 
     }
     return value
   })
-  
+
   if (userId) {
     const stmt = database.prepare(`
       UPDATE ads SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
@@ -379,14 +395,14 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, 
     `)
     stmt.run(...values, id)
   }
-  
+
   return getAdById(id)
 }
 
 export function deleteAd(id: number, userId?: number): boolean {
   const database = getDatabase()
   console.log('[DB] Attempting to delete ad:', id)
-  
+
   let result;
   if (userId) {
     const stmt = database.prepare('DELETE FROM ads WHERE id = ? AND user_id = ?')
@@ -405,7 +421,7 @@ export function getDashboardStats(userId?: number) {
   const today = new Date().toISOString().split('T')[0]
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  
+
   // Stats should reflect what user sees.
   // If user sees everything, stats should probably be global?
   // But usually dashboard stats are personal. 
@@ -414,31 +430,31 @@ export function getDashboardStats(userId?: number) {
   // Let's keep it personal for now if userId is provided, but maybe we should expose global stats too.
   // Actually, if everyone sees everyone's ads, "Active Ads" count should probably be global.
   // But let's stick to existing logic for stats unless requested otherwise.
-  
+
   const activeAdsQuery = userId
     ? `SELECT COUNT(*) as count FROM ads WHERE is_active = 1 AND start_date <= ? AND end_date >= ? AND user_id = ?`
     : `SELECT COUNT(*) as count FROM ads WHERE is_active = 1 AND start_date <= ? AND end_date >= ?`
   const activeAdsStmt = database.prepare(activeAdsQuery)
   const activeAds = userId ? (activeAdsStmt.get(today, today, userId) as { count: number }) : (activeAdsStmt.get(today, today) as { count: number })
-  
+
   const scheduledTodayQuery = userId
     ? `SELECT COUNT(*) as count FROM ads WHERE start_date >= ? AND start_date < ? AND user_id = ?`
     : `SELECT COUNT(*) as count FROM ads WHERE start_date >= ? AND start_date < ?`
   const scheduledTodayStmt = database.prepare(scheduledTodayQuery)
   const scheduledToday = userId ? (scheduledTodayStmt.get(today, tomorrow, userId) as { count: number }) : (scheduledTodayStmt.get(today, tomorrow) as { count: number })
-  
+
   const endingSoonQuery = userId
     ? `SELECT COUNT(*) as count FROM ads WHERE end_date >= ? AND end_date <= ? AND is_active = 1 AND user_id = ?`
     : `SELECT COUNT(*) as count FROM ads WHERE end_date >= ? AND end_date <= ? AND is_active = 1`
   const endingSoonStmt = database.prepare(endingSoonQuery)
   const endingSoon = userId ? (endingSoonStmt.get(today, sevenDaysLater, userId) as { count: number }) : (endingSoonStmt.get(today, sevenDaysLater) as { count: number })
-  
+
   const totalPartnersQuery = userId
     ? 'SELECT COUNT(*) as count FROM partners WHERE user_id = ?'
     : 'SELECT COUNT(*) as count FROM partners'
   const totalPartnersStmt = database.prepare(totalPartnersQuery)
   const totalPartners = userId ? (totalPartnersStmt.get(userId) as { count: number }) : (totalPartnersStmt.get() as { count: number })
-  
+
   return {
     activeAds: activeAds.count,
     scheduledToday: scheduledToday.count,
@@ -556,9 +572,9 @@ export function updateLastSeen(userId: number): void {
 export function listUsers(): { id: number; username: string; display_name: string | null; role: string | null; last_seen: string | null; email: string | null; status: string | null }[] {
   const database = getDatabase()
   const rows = database.prepare('SELECT id, username, display_name, role, last_seen, email, status FROM users ORDER BY username').all() as any[]
-  return rows.map((r) => ({ 
-    id: r.id, 
-    username: r.username, 
+  return rows.map((r) => ({
+    id: r.id,
+    username: r.username,
     display_name: r.display_name ?? null,
     role: r.role ?? 'user',
     last_seen: r.last_seen ?? null,
@@ -571,7 +587,7 @@ export function updateUser(id: number, updates: { role?: string; status?: string
   const database = getDatabase()
   const sets: string[] = []
   const values: any[] = []
-  
+
   if (updates.role) {
     sets.push('role = ?')
     values.push(updates.role)
@@ -580,12 +596,12 @@ export function updateUser(id: number, updates: { role?: string; status?: string
     sets.push('status = ?')
     values.push(updates.status)
   }
-  
+
   if (sets.length === 0) return false
-  
+
   sets.push('updated_at = CURRENT_TIMESTAMP')
   values.push(id)
-  
+
   const query = `UPDATE users SET ${sets.join(', ')} WHERE id = ?`
   const result = database.prepare(query).run(...values)
   return result.changes > 0
@@ -623,13 +639,13 @@ export function getSystemSettings() {
 export function saveSystemSettings(settings: Record<string, any>) {
   const database = getDatabase()
   const insert = database.prepare('INSERT OR REPLACE INTO system_settings (key, value) VALUES (?, ?)')
-  
+
   const transaction = database.transaction(() => {
     Object.entries(settings).forEach(([key, value]) => {
       insert.run(key, JSON.stringify(value))
     })
   })
-  
+
   transaction()
 }
 
@@ -637,7 +653,7 @@ export function getAllExpiringAds(days: number = 7, types: string[] = []) {
   const database = getDatabase()
   const today = new Date().toISOString().split('T')[0]
   const future = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  
+
   let query = `
     SELECT a.*, p.name as partner_name, p.office as partner_office 
     FROM ads a
@@ -646,19 +662,19 @@ export function getAllExpiringAds(days: number = 7, types: string[] = []) {
     AND a.end_date >= ? 
     AND a.end_date <= ?
   `
-  
+
   if (types.length > 0) {
     const placeholders = types.map(() => '?').join(',')
     query += ` AND a.type IN (${placeholders})`
   }
-  
+
   query += ` ORDER BY a.end_date ASC`
-  
+
   const stmt = database.prepare(query)
   const args = [today, future, ...types]
-  
+
   const rows = stmt.all(...args) as any[]
-  
+
   return rows.map(row => ({
     id: row.id,
     positionName: row.position_name,
@@ -681,9 +697,9 @@ export function logActivity(userId: number | null, username: string, action: str
   stmt.run(userId, username, action, entityType, entityId, details)
 }
 
-export function getActivityLogs(limit = 100, offset = 0, filters?: { 
-  userId?: number, 
-  action?: string, 
+export function getActivityLogs(limit = 100, offset = 0, filters?: {
+  userId?: number,
+  action?: string,
   entityType?: string,
   startDate?: string,
   endDate?: string,
@@ -740,7 +756,7 @@ export function createInvite(email: string, role: string, createdBy: number, exp
   const database = getDatabase()
   const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
   const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString()
-  
+
   const stmt = database.prepare(`
     INSERT INTO invites (token, email, role, created_by, expires_at)
     VALUES (?, ?, ?, ?, ?)

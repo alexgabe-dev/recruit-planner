@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { format } from "date-fns"
-import { hu } from "date-fns/locale"
+import { format } from "date-fns/format"
+import { hu } from "date-fns/locale/hu"
 import { Loader2, Download, Search, RefreshCw, Filter, CalendarIcon, X } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +49,7 @@ export default function ActivityLogsPage() {
     fetch('/api/users')
       .then(res => res.ok ? res.json() : [])
       .then(data => setUsers(data))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   const fetchLogs = async () => {
@@ -62,7 +62,7 @@ export default function ActivityLogsPage() {
       if (filters.search) params.append("search", filters.search)
       if (filters.date?.from) params.append("startDate", filters.date.from.toISOString())
       if (filters.date?.to) params.append("endDate", filters.date.to.toISOString())
-      
+
       params.append("limit", "100")
 
       const res = await fetch(`/api/admin/logs?${params.toString()}`)
@@ -79,7 +79,7 @@ export default function ActivityLogsPage() {
 
   useEffect(() => {
     fetchLogs()
-  }, []) 
+  }, [])
 
   const handleSearch = () => {
     fetchLogs()
@@ -203,8 +203,8 @@ export default function ActivityLogsPage() {
               {/* User */}
               <div className="grid gap-1.5 flex-1 min-w-[140px]">
                 <label className="text-sm font-medium">Felhasználó</label>
-                <Select 
-                  value={filters.userId} 
+                <Select
+                  value={filters.userId}
                   onValueChange={(v) => setFilters(prev => ({ ...prev, userId: v }))}
                 >
                   <SelectTrigger>
@@ -222,8 +222,8 @@ export default function ActivityLogsPage() {
               {/* Action */}
               <div className="grid gap-1.5 flex-1 min-w-[140px]">
                 <label className="text-sm font-medium">Művelet</label>
-                <Select 
-                  value={filters.action} 
+                <Select
+                  value={filters.action}
                   onValueChange={(v) => setFilters(prev => ({ ...prev, action: v }))}
                 >
                   <SelectTrigger>
@@ -243,8 +243,8 @@ export default function ActivityLogsPage() {
               {/* Entity Type */}
               <div className="grid gap-1.5 flex-1 min-w-[140px]">
                 <label className="text-sm font-medium">Entitás Típus</label>
-                <Select 
-                  value={filters.entityType} 
+                <Select
+                  value={filters.entityType}
                   onValueChange={(v) => setFilters(prev => ({ ...prev, entityType: v }))}
                 >
                   <SelectTrigger>
@@ -263,26 +263,26 @@ export default function ActivityLogsPage() {
 
               {/* Search */}
               <div className="grid gap-1.5 flex-[2] min-w-[200px]">
-                 <label className="text-sm font-medium">Keresés (részletekben)</label>
-                 <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Keresés..." 
-                        value={filters.search}
-                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                        className="pl-9"
-                    />
-                 </div>
+                <label className="text-sm font-medium">Keresés (részletekben)</label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Keresés..."
+                    value={filters.search}
+                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    className="pl-9"
+                  />
+                </div>
               </div>
 
               {/* Buttons */}
               <div className="flex gap-2">
                 <Button onClick={handleSearch} className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Szűrés
+                  <Filter className="h-4 w-4" />
+                  Szűrés
                 </Button>
                 <Button variant="ghost" onClick={handleReset} size="icon" title="Alaphelyzet">
-                    <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -305,8 +305,8 @@ export default function ActivityLogsPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
                     <div className="flex justify-center items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Betöltés...
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Betöltés...
                     </div>
                   </TableCell>
                 </TableRow>
