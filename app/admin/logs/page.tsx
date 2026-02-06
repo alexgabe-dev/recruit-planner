@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
+import { exportLogsToExcel } from "@/lib/excel-export"
 
 interface LogEntry {
   id: number
@@ -102,28 +103,8 @@ export default function ActivityLogsPage() {
       return
     }
 
-    const headers = ["ID", "Dátum", "Felhasználó", "Művelet", "Típus", "Entitás ID", "Részletek"]
-    const csvContent = [
-      headers.join(";"),
-      ...logs.map(log => [
-        log.id,
-        format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
-        log.username || "Rendszer",
-        log.action,
-        log.entity_type || "-",
-        log.entity_id || "-",
-        `"${(log.details || "").replace(/"/g, '""')}"` // Escape quotes
-      ].join(";"))
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `activity_log_${format(new Date(), "yyyyMMdd_HHmmss")}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    exportLogsToExcel({ logs })
+    toast.success("Excel fájl sikeresen exportálva!")
   }
 
   const getActionBadge = (action: string) => {

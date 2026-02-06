@@ -5,6 +5,117 @@ interface ExportData {
   ads: (Ad & { partner?: Partner })[]
 }
 
+export interface LogEntry {
+  id: number
+  username: string | null
+  action: string
+  entity_type: string | null
+  entity_id: number | null
+  details: string | null
+  created_at: string
+}
+
+export async function exportLogsToExcel({ logs }: { logs: LogEntry[] }) {
+  const workbook = new ExcelJS.Workbook()
+  const sheet = workbook.addWorksheet("Tevékenységnapló")
+
+  // Define columns
+  sheet.columns = [
+    { header: "ID", key: "id", width: 10 },
+    { header: "Dátum", key: "date", width: 20 },
+    { header: "Felhasználó", key: "username", width: 20 },
+    { header: "Művelet", key: "action", width: 15 },
+    { header: "Típus", key: "type", width: 15 },
+    { header: "Entitás ID", key: "entityId", width: 10 },
+    { header: "Részletek", key: "details", width: 50 },
+  ]
+
+  // Style header row
+  const headerRow = sheet.getRow(1)
+  headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } }
+  headerRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF4F46E5" }, // Indigo-600
+  }
+  headerRow.alignment = { vertical: "middle", horizontal: "center" }
+  headerRow.height = 24
+
+  // Map actions to Hungarian
+  const getActionName = (action: string) => {
+    switch (action) {
+      case 'create': return 'Létrehozás'
+      case 'update': return 'Módosítás'
+      case 'delete': return 'Törlés'
+      case 'login': return 'Belépés'
+      case 'logout': return 'Kilépés'
+      default: return action
+    }
+  }
+
+  // Add data
+  logs.forEach((log) => {
+    const row = sheet.addRow({
+      id: log.id,
+      date: new Date(log.created_at),
+      username: log.username || "Rendszer",
+      action: getActionName(log.action),
+      type: log.entity_type || "-",
+      entityId: log.entity_id || "-",
+      details: log.details || "-",
+    })
+
+    // Style data row
+    row.alignment = { vertical: "middle" }
+    row.getCell("id").alignment = { vertical: "middle", horizontal: "center" }
+    row.getCell("date").alignment = { vertical: "middle", horizontal: "center" }
+    row.getCell("action").alignment = { vertical: "middle", horizontal: "center" }
+    row.getCell("type").alignment = { vertical: "middle", horizontal: "center" }
+    row.getCell("entityId").alignment = { vertical: "middle", horizontal: "center" }
+
+    // Format dates
+    row.getCell("date").numFmt = "yyyy-mm-dd hh:mm"
+  })
+
+  // Add borders to all cells
+  sheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFCBD5E1" } },
+        left: { style: "thin", color: { argb: "FFCBD5E1" } },
+        bottom: { style: "thin", color: { argb: "FFCBD5E1" } },
+        right: { style: "thin", color: { argb: "FFCBD5E1" } },
+      }
+    })
+  })
+
+  // Generate filename
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+  const hour = String(now.getHours()).padStart(2, "0")
+  const minute = String(now.getMinutes()).padStart(2, "0")
+  const filename = `tevekenysegnaplo_${now.getFullYear()}${month}${day}_${hour}${minute}.xlsx`
+
+  // Write buffer
+  const buffer = await workbook.xlsx.writeBuffer()
+
+  // Trigger download
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+interface ExportData {
+  ads: (Ad & { partner?: Partner })[]
+}
+
 export async function exportToExcel({ ads }: ExportData) {
   // Sort data
   const sorted = [...ads].sort((a, b) => {
@@ -64,7 +175,7 @@ export async function exportToExcel({ ads }: ExportData) {
     row.getCell("end").alignment = { vertical: "middle", horizontal: "center" }
     row.getCell("status").alignment = { vertical: "middle", horizontal: "center" }
     row.getCell("type").alignment = { vertical: "middle", horizontal: "center" }
-    
+
     // Format dates
     row.getCell("start").numFmt = "yyyy-mm-dd"
     row.getCell("end").numFmt = "yyyy-mm-dd"
@@ -88,7 +199,7 @@ export async function exportToExcel({ ads }: ExportData) {
 
   // Write buffer
   const buffer = await workbook.xlsx.writeBuffer()
-  
+
   // Trigger download
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
   const url = URL.createObjectURL(blob)
