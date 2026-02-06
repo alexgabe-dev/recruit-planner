@@ -206,7 +206,7 @@ export function weeklyDigestEmail({ to, ads, start, end }: { to: string; ads: an
     <div style="${styles.detailBox}">
       ${adRows}
     </div>
-    <p style="${styles.text}">Kérjük, ellenőrizd a hirdetéseket és hosszabbítsd meg őket, ha szükséges.</p>
+    <p style="${styles.text}">Kérjük, ellenőrizd a hiréseket és ha újra fel kell őket adni jelezd pls.</p>detéseket 
   ` : `
     <p style="${styles.text}">Ezen a héten (${start} - ${end}) nincs lejáró hirdetés a rendszerben.</p>
     <p style="${styles.text}">Jelenleg minden rendben van.</p>
