@@ -298,11 +298,25 @@ export function NotificationsContent() {
                 <SelectValue placeholder="Válassz felhasználót" />
               </SelectTrigger>
               <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id.toString()}>
-                    {user.display_name || user.username} ({user.email})
-                  </SelectItem>
-                ))}
+                {users.length > 0 && (
+                  <>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.display_name || user.username} ({user.email})
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                {extraEmails.length > 0 && (
+                  <>
+                    {users.length > 0 && <div className="border-t my-1" />}
+                    {extraEmails.map(email => (
+                      <SelectItem key={`extra-${email}`} value={email}>
+                        📧 {email} (extra)
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

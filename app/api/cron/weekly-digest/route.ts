@@ -62,18 +62,20 @@ async function handleWeeklyDigest(targetUserId: number | null, isManualTest: boo
     let recipientEmails: string[] = []
 
     if (targetUserId) {
-      // Manual test for specific user
-      const allUsers = listUsers()
-      const target = allUsers.find(u => u.id === Number(targetUserId))
-      if (target?.email) recipientEmails.push(target.email)
+      // Manual test for specific user or extra email
+      // Check if it's a user ID (numeric) or an email address
+      if (targetUserId.toString().includes('@')) {
+        // It's an email address
+        recipientEmails.push(targetUserId.toString())
+      } else {
+        const allUsers = listUsers()
+        const target = allUsers.find(u => u.id === Number(targetUserId))
+        if (target?.email) recipientEmails.push(target.email)
+      }
     } else {
-      // Bulk send to ALL active users with email
-      const users = listUsers().filter(u => u.status === 'active' && u.email)
-      recipientEmails = users.map(u => u.email!)
-
-      // Add extra notification emails
+      // Automatic cron: ONLY send to extra notification emails
       const extraEmails = getNotificationEmails()
-      recipientEmails = [...recipientEmails, ...extraEmails]
+      recipientEmails = [...extraEmails]
     }
 
     // Deduplicate
