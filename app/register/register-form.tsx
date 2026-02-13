@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import Orb from "@/components/Orb"
+import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars"
 import { CheckCircle2, User, Mail, Lock, Loader2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow"
@@ -85,6 +86,7 @@ export default function RegisterForm() {
 
   return (
     <div className="relative w-full flex justify-center min-h-screen items-center bg-background p-4">
+      <GravityStarsBackground className="absolute inset-0" />
       <Card className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 overflow-hidden border-border bg-card/80 backdrop-blur shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
 
         {/* Left Column - Form */}

@@ -3,6 +3,7 @@ import ExcelJS from "exceljs"
 
 interface ExportData {
   ads: (Ad & { partner?: Partner })[]
+  includeBusinessArea?: boolean
 }
 
 export interface LogEntry {
@@ -112,11 +113,7 @@ export async function exportLogsToExcel({ logs }: { logs: LogEntry[] }) {
   URL.revokeObjectURL(url)
 }
 
-interface ExportData {
-  ads: (Ad & { partner?: Partner })[]
-}
-
-export async function exportToExcel({ ads }: ExportData) {
+export async function exportToExcel({ ads, includeBusinessArea = false }: ExportData) {
   // Sort data
   const sorted = [...ads].sort((a, b) => {
     const ao = a.partner?.office?.localeCompare(b.partner?.office || "") || 0
@@ -132,7 +129,7 @@ export async function exportToExcel({ ads }: ExportData) {
   const sheet = workbook.addWorksheet("Hirdetések")
 
   // Define columns
-  sheet.columns = [
+  const columns: { header: string; key: string; width: number }[] = [
     { header: "Illetékes iroda", key: "office", width: 20 },
     { header: "Partner", key: "partner", width: 25 },
     { header: "Munkakör", key: "position", width: 25 },
@@ -142,6 +139,10 @@ export async function exportToExcel({ ads }: ExportData) {
     { header: "Vége", key: "end", width: 15 },
     { header: "Státusz", key: "status", width: 15 },
   ]
+  if (includeBusinessArea) {
+    columns.splice(2, 0, { header: "Üzletág", key: "businessArea", width: 18 })
+  }
+  sheet.columns = columns
 
   // Style header row
   const headerRow = sheet.getRow(1)
@@ -159,6 +160,7 @@ export async function exportToExcel({ ads }: ExportData) {
     const row = sheet.addRow({
       office: ad.partner?.office ?? "",
       partner: ad.partner?.name ?? "",
+      businessArea: ad.businessArea,
       position: ad.positionName,
       content: ad.adContent,
       type: ad.type,
@@ -171,6 +173,9 @@ export async function exportToExcel({ ads }: ExportData) {
     row.alignment = { vertical: "middle" }
     row.getCell("office").alignment = { vertical: "middle", horizontal: "left" }
     row.getCell("partner").alignment = { vertical: "middle", horizontal: "left" }
+    if (includeBusinessArea) {
+      row.getCell("businessArea").alignment = { vertical: "middle", horizontal: "center" }
+    }
     row.getCell("start").alignment = { vertical: "middle", horizontal: "center" }
     row.getCell("end").alignment = { vertical: "middle", horizontal: "center" }
     row.getCell("status").alignment = { vertical: "middle", horizontal: "center" }

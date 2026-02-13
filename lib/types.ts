@@ -12,6 +12,7 @@ export interface Ad {
   positionName: string
   adContent: string
   type: "kampány" | "post" | "kiemelt post" | "Profession"
+  businessArea: "Kölcsönzés" | "Közvetítés"
   startDate: Date
   endDate: Date
   isActive: boolean

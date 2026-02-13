@@ -53,7 +53,7 @@ export function AdsTable() {
   // Default sorting: Status (Active first), which effectively uses our custom logic below
   const [sorting, setSorting] = useState<SortingState>([{ id: "status", desc: false }])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ select: false })
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ select: false, businessArea: false })
 
   // Update visibility based on role
   useEffect(() => {
@@ -68,9 +68,11 @@ export function AdsTable() {
   // Filter states
   const [officeFilter, setOfficeFilter] = useState<string>("all")
   const [partnerFilter, setPartnerFilter] = useState<string>("all")
+  const [businessAreaFilter, setBusinessAreaFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
+  const [showFilters, setShowFilters] = useState(false)
 
   // Dialog states
   const [editingAd, setEditingAd] = useState<AdWithPartner | null>(null)
@@ -133,6 +135,7 @@ export function AdsTable() {
   // Get unique values for filters
   const offices = useMemo(() => [...new Set(partners.map((p) => p.office))].sort(), [partners])
   const partnerNames = useMemo(() => [...new Set(partners.map((p) => p.name))].sort(), [partners])
+  const businessAreas: Ad["businessArea"][] = ["Kölcsönzés", "Közvetítés"]
   const adTypes: Ad["type"][] = ["kampány", "post", "kiemelt post", "Profession"]
   const statuses: AdStatus[] = ["Aktív", "Időzített", "Lejárt"]
 
@@ -141,6 +144,7 @@ export function AdsTable() {
     return data.filter((ad) => {
       if (officeFilter !== "all" && ad.partner?.office !== officeFilter) return false
       if (partnerFilter !== "all" && ad.partner?.name !== partnerFilter) return false
+      if (businessAreaFilter !== "all" && ad.businessArea !== businessAreaFilter) return false
       if (typeFilter !== "all" && ad.type !== typeFilter) return false
       if (statusFilter !== "all" && ad.status !== statusFilter) return false
 
@@ -162,13 +166,14 @@ export function AdsTable() {
         return (
           ad.positionName.toLowerCase().includes(search) ||
           ad.adContent.toLowerCase().includes(search) ||
+          ad.businessArea.toLowerCase().includes(search) ||
           ad.partner?.name.toLowerCase().includes(search) ||
           ad.partner?.office.toLowerCase().includes(search)
         )
       }
       return true
     })
-  }, [data, officeFilter, partnerFilter, typeFilter, statusFilter, globalFilter, dateRange])
+  }, [data, officeFilter, partnerFilter, businessAreaFilter, typeFilter, statusFilter, globalFilter, dateRange])
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("hu-HU", {
@@ -256,6 +261,27 @@ export function AdsTable() {
         </Button>
       ),
       cell: ({ row }) => <span className="font-medium">{row.original.partner?.name}</span>,
+      meta: {
+        className: "hidden sm:table-cell",
+      },
+    },
+    {
+      id: "businessArea",
+      accessorKey: "businessArea",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2 text-xs"
+        >
+          Üzletág
+          <ArrowUpDown className="ml-1 h-3 w-3" />
+        </Button>
+      ),
+      cell: ({ row }) => <span className="text-sm">{row.getValue("businessArea")}</span>,
+      meta: {
+        className: "hidden md:table-cell",
+      },
     },
     {
       id: "positionName",
@@ -275,6 +301,9 @@ export function AdsTable() {
           {row.getValue("positionName")}
         </div>
       ),
+      meta: {
+        className: "max-w-[180px]",
+      },
     },
     {
       id: "adContent",
@@ -285,6 +314,9 @@ export function AdsTable() {
           {row.getValue("adContent")}
         </div>
       ),
+      meta: {
+        className: "hidden xl:table-cell max-w-[220px]",
+      },
     },
     {
       id: "type",
@@ -344,6 +376,9 @@ export function AdsTable() {
         </Button>
       ),
       cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+      meta: {
+        className: "w-[120px] text-center",
+      },
       sortingFn: (rowA, rowB, columnId) => {
         const statusA = rowA.getValue(columnId) as string
         const statusB = rowB.getValue(columnId) as string
@@ -372,6 +407,7 @@ export function AdsTable() {
     },
     {
       id: "actions",
+      header: "",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -401,6 +437,9 @@ export function AdsTable() {
           </DropdownMenuContent>
         </DropdownMenu>
       ),
+      meta: {
+        className: "w-10 px-1 text-center",
+      },
     },
   ]
 
@@ -423,20 +462,24 @@ export function AdsTable() {
   })
 
   const handleExport = () => {
-    exportToExcel({ ads: filteredData })
+    exportToExcel({
+      ads: filteredData,
+      includeBusinessArea: table.getColumn("businessArea")?.getIsVisible() ?? false,
+    })
     toast.success("Excel fájl sikeresen exportálva!")
   }
 
   const clearFilters = () => {
     setOfficeFilter("all")
     setPartnerFilter("all")
+    setBusinessAreaFilter("all")
     setTypeFilter("all")
     setStatusFilter("all")
     setGlobalFilter("")
     setDateRange(undefined)
   }
 
-  const hasActiveFilters = officeFilter !== "all" || partnerFilter !== "all" || typeFilter !== "all" || statusFilter !== "all" || globalFilter !== "" || dateRange !== undefined
+  const hasActiveFilters = officeFilter !== "all" || partnerFilter !== "all" || businessAreaFilter !== "all" || typeFilter !== "all" || statusFilter !== "all" || globalFilter !== "" || dateRange !== undefined
 
   return (
     <div className="space-y-4">
@@ -467,12 +510,12 @@ export function AdsTable() {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="Opcionális oszlopok" title="Opcionális oszlopok">
                 <Columns className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Oszlopok</DropdownMenuLabel>
+              <DropdownMenuLabel>Opcionális oszlopok</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {table
                 .getAllColumns()
@@ -482,6 +525,7 @@ export function AdsTable() {
                     select: "Kijelölés",
                     partner_office: "Iroda",
                     partner_name: "Partner",
+                    businessArea: "Üzletág",
                     positionName: "Munkakör",
                     adContent: "Hirdetés",
                     type: "Típus",
@@ -505,97 +549,134 @@ export function AdsTable() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter className="h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className={cn(
+            "h-10 w-10 shrink-0 transition-colors duration-200",
+            (showFilters || hasActiveFilters) && "border-primary text-primary bg-primary/10"
+          )}
+          onClick={() => setShowFilters((prev) => !prev)}
+          aria-label="Szűrők megjelenítése"
+          title="Szűrők"
+        >
+          <Filter className="h-4 w-4" />
+        </Button>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn(
-                "h-10 w-10 shrink-0",
-                dateRange && "border-primary text-primary bg-primary/10"
+        <div
+          className={cn(
+            "min-w-0 overflow-hidden origin-left transition-[max-width,max-height,opacity,transform] duration-300 ease-in-out",
+            showFilters
+              ? "max-w-[1100px] max-h-14 opacity-100 translate-x-0"
+              : "max-w-0 max-h-0 opacity-0 -translate-x-2 pointer-events-none"
+          )}
+        >
+          <div className="flex items-center gap-2 whitespace-nowrap pl-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={cn(
+                      "h-10 w-10 shrink-0",
+                      dateRange && "border-primary text-primary bg-primary/10"
+                    )}
+                    title={dateRange?.from ? (dateRange.to ? `${format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })} - ${format(dateRange.to, 'yyyy. MM. dd.', { locale: hu })}` : format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })) : "Időszak választása"}
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    locale={hu}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Select value={officeFilter} onValueChange={setOfficeFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Iroda" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Összes iroda</SelectItem>
+                  {offices.map((office) => (
+                    <SelectItem key={office} value={office}>
+                      {office}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={partnerFilter} onValueChange={setPartnerFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Partner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Összes partner</SelectItem>
+                  {partnerNames.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={businessAreaFilter} onValueChange={setBusinessAreaFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Üzletág" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Összes üzletág</SelectItem>
+                  {businessAreas.map((businessArea) => (
+                    <SelectItem key={businessArea} value={businessArea}>
+                      {businessArea}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Típus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Összes típus</SelectItem>
+                  {adTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Státusz" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Összes státusz</SelectItem>
+                  {statuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+                  Szűrők törlése
+                </Button>
               )}
-              title={dateRange?.from ? (dateRange.to ? `${format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })} - ${format(dateRange.to, 'yyyy. MM. dd.', { locale: hu })}` : format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })) : "Időszak választása"}
-            >
-              <CalendarIcon className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-              locale={hu}
-            />
-          </PopoverContent>
-        </Popover>
-
-        <Select value={officeFilter} onValueChange={setOfficeFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Iroda" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Összes iroda</SelectItem>
-            {offices.map((office) => (
-              <SelectItem key={office} value={office}>
-                {office}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={partnerFilter} onValueChange={setPartnerFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Partner" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Összes partner</SelectItem>
-            {partnerNames.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Típus" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Összes típus</SelectItem>
-            {adTypes.map((type) => (
-              <SelectItem key={type} value={type}>
-                {type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Státusz" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Összes státusz</SelectItem>
-            {statuses.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-            Szűrők törlése
-          </Button>
-        )}
+          </div>
+        </div>
 
         <div className="ml-auto flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{filteredData.length} hirdetés</span>
@@ -605,14 +686,14 @@ export function AdsTable() {
 
       {/* Table */}
       <div className="rounded-lg border border-border">
-        <Table>
+        <Table className="w-full table-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={cn("bg-muted/50", (header.column.columnDef as any).meta?.className)}
+                    className={cn("bg-muted/50 whitespace-normal break-words", (header.column.columnDef as any).meta?.className)}
                   >
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -625,7 +706,7 @@ export function AdsTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className={(cell.column.columnDef as any).meta?.className}>
+                    <TableCell key={cell.id} className={cn("whitespace-normal break-words", (cell.column.columnDef as any).meta?.className)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

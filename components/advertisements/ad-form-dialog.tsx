@@ -25,6 +25,7 @@ const formSchema = z.object({
   positionName: z.string().min(1, "Kötelező mező"),
   adContent: z.string().min(1, "Kötelező mező"),
   type: z.enum(["kampány", "post", "kiemelt post", "Profession"]),
+  businessArea: z.enum(["Kölcsönzés", "Közvetítés"]),
   partnerId: z.number().min(1, "Válasszon partnert"),
   startDate: z.date(),
   endDate: z.date(),
@@ -50,6 +51,7 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
       positionName: "",
       adContent: "",
       type: "post",
+      businessArea: "Kölcsönzés",
       partnerId: 0,
       startDate: new Date(),
       endDate: new Date(),
@@ -63,6 +65,7 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
         positionName: ad.positionName,
         adContent: ad.adContent,
         type: ad.type,
+        businessArea: ad.businessArea ?? "Kölcsönzés",
         partnerId: ad.partnerId,
         startDate: new Date(ad.startDate),
         endDate: new Date(ad.endDate),
@@ -73,6 +76,7 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
         positionName: "",
         adContent: "",
         type: "post",
+        businessArea: "Kölcsönzés",
         partnerId: partners[0]?.id || 0,
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -99,13 +103,13 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{mode === "create" ? "Új hirdetés" : "Hirdetés szerkesztése"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
               name="partnerId"
@@ -179,29 +183,53 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Típus</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="kampány">Kampány</SelectItem>
-                      <SelectItem value="post">Post</SelectItem>
-                      <SelectItem value="kiemelt post">Kiemelt post</SelectItem>
-                      <SelectItem value="Profession">Profession</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Típus</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="kampány">Kampány</SelectItem>
+                        <SelectItem value="post">Post</SelectItem>
+                        <SelectItem value="kiemelt post">Kiemelt post</SelectItem>
+                        <SelectItem value="Profession">Profession</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="businessArea"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Üzletág</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Kölcsönzés">Kölcsönzés</SelectItem>
+                        <SelectItem value="Közvetítés">Közvetítés</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -279,7 +307,7 @@ export function AdFormDialog({ open, onOpenChange, mode, ad }: AdFormDialogProps
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Mégse
               </Button>

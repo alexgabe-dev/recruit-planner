@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       positionName: body.positionName,
       adContent: body.adContent,
       type: body.type,
+      businessArea: body.businessArea ?? "Kölcsönzés",
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),
       isActive: Boolean(body.isActive),

@@ -17,6 +17,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (body.positionName !== undefined) updates.positionName = body.positionName
     if (body.adContent !== undefined) updates.adContent = body.adContent
     if (body.type !== undefined) updates.type = body.type
+    if (body.businessArea !== undefined) updates.businessArea = body.businessArea
     if (body.startDate !== undefined) updates.startDate = new Date(body.startDate)
     if (body.endDate !== undefined) updates.endDate = new Date(body.endDate)
     if (body.isActive !== undefined) updates.isActive = Boolean(body.isActive)

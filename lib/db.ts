@@ -69,6 +69,7 @@ export function initializeDatabase() {
       position_name TEXT NOT NULL,
       ad_content TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('kampány', 'post', 'kiemelt post', 'Profession')),
+      business_area TEXT NOT NULL DEFAULT 'Kölcsönzés',
       start_date DATETIME NOT NULL,
       end_date DATETIME NOT NULL,
       is_active BOOLEAN DEFAULT 1,
@@ -164,6 +165,7 @@ export function initializeDatabase() {
   const adCols = database.prepare("PRAGMA table_info(ads)").all() as { name: string }[]
   const haveAds = new Set(adCols.map((c) => c.name))
   if (!haveAds.has('user_id')) database.exec('ALTER TABLE ads ADD COLUMN user_id INTEGER')
+  if (!haveAds.has('business_area')) database.exec("ALTER TABLE ads ADD COLUMN business_area TEXT NOT NULL DEFAULT 'Kölcsönzés'")
 
   // Create indexes that depend on migrated columns
   database.exec(`
@@ -183,6 +185,7 @@ export function initializeDatabase() {
           position_name TEXT NOT NULL,
           ad_content TEXT NOT NULL,
           type TEXT NOT NULL CHECK(type IN ('kampány', 'post', 'kiemelt post', 'Profession')),
+          business_area TEXT NOT NULL DEFAULT 'Kölcsönzés',
           start_date DATETIME NOT NULL,
           end_date DATETIME NOT NULL,
           is_active BOOLEAN DEFAULT 1,
@@ -196,8 +199,8 @@ export function initializeDatabase() {
       `)
       // We use explicit columns to ensure safety even if column order differed
       database.exec(`
-        INSERT INTO ads (id, position_name, ad_content, type, start_date, end_date, is_active, created_at, updated_at, partner_id, user_id)
-        SELECT id, position_name, ad_content, type, start_date, end_date, is_active, created_at, updated_at, partner_id, user_id 
+        INSERT INTO ads (id, position_name, ad_content, type, business_area, start_date, end_date, is_active, created_at, updated_at, partner_id, user_id)
+        SELECT id, position_name, ad_content, type, 'Kölcsönzés', start_date, end_date, is_active, created_at, updated_at, partner_id, user_id 
         FROM ads_old
       `)
       database.exec("DROP TABLE ads_old")
@@ -293,6 +296,7 @@ export function getAllAds(userId?: number): (Ad & { partner: Partner })[] {
     positionName: row.position_name,
     adContent: row.ad_content,
     type: row.type,
+    businessArea: row.business_area ?? 'Kölcsönzés',
     startDate: new Date(row.start_date),
     endDate: new Date(row.end_date),
     isActive: Boolean(row.is_active),
@@ -325,6 +329,7 @@ export function getAdById(id: number): (Ad & { partner: Partner }) | null {
     positionName: row.position_name,
     adContent: row.ad_content,
     type: row.type,
+    businessArea: row.business_area ?? 'Kölcsönzés',
     startDate: new Date(row.start_date),
     endDate: new Date(row.end_date),
     isActive: Boolean(row.is_active),
@@ -343,13 +348,14 @@ export function getAdById(id: number): (Ad & { partner: Partner }) | null {
 export function createAd(ad: Omit<Ad, 'id' | 'createdAt'>, userId: number): Ad {
   const database = getDatabase()
   const stmt = database.prepare(`
-    INSERT INTO ads (position_name, ad_content, type, start_date, end_date, is_active, partner_id, user_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO ads (position_name, ad_content, type, business_area, start_date, end_date, is_active, partner_id, user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
   const result = stmt.run(
     ad.positionName,
     ad.adContent,
     ad.type,
+    ad.businessArea,
     ad.startDate.toISOString(),
     ad.endDate.toISOString(),
     ad.isActive ? 1 : 0,
@@ -367,6 +373,7 @@ export function updateAd(id: number, ad: Partial<Omit<Ad, 'id' | 'createdAt'>>, 
   const fields = Object.keys(ad).map(key => {
     if (key === 'positionName') return 'position_name = ?'
     if (key === 'adContent') return 'ad_content = ?'
+    if (key === 'businessArea') return 'business_area = ?'
     if (key === 'startDate') return 'start_date = ?'
     if (key === 'endDate') return 'end_date = ?'
     if (key === 'isActive') return 'is_active = ?'
