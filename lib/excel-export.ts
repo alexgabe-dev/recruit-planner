@@ -50,6 +50,7 @@ export async function exportLogsToExcel({ logs }: { logs: LogEntry[] }) {
       case 'delete': return 'Törlés'
       case 'login': return 'Belépés'
       case 'logout': return 'Kilépés'
+      case 'export': return 'Exportálás'
       default: return action
     }
   }

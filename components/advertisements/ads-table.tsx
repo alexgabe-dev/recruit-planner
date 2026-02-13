@@ -461,11 +461,21 @@ export function AdsTable() {
     },
   })
 
-  const handleExport = () => {
-    exportToExcel({
+  const handleExport = async () => {
+    await exportToExcel({
       ads: filteredData,
       includeBusinessArea: table.getColumn("businessArea")?.getIsVisible() ?? false,
     })
+    try {
+      await fetch("/api/activity/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityType: "ad",
+          details: `Hirdetések exportálva (${filteredData.length} db)`,
+        }),
+      })
+    } catch {}
     toast.success("Excel fájl sikeresen exportálva!")
   }
 

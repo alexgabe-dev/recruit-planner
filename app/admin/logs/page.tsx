@@ -97,13 +97,23 @@ export default function ActivityLogsPage() {
     setTimeout(fetchLogs, 0)
   }
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (logs.length === 0) {
       toast.error("Nincs exportálható adat")
       return
     }
 
-    exportLogsToExcel({ logs })
+    await exportLogsToExcel({ logs })
+    try {
+      await fetch("/api/activity/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityType: "activity_log",
+          details: `Tevékenységnapló exportálva (${logs.length} sor)`,
+        }),
+      })
+    } catch {}
     toast.success("Excel fájl sikeresen exportálva!")
   }
 
@@ -114,6 +124,7 @@ export default function ActivityLogsPage() {
       case 'delete': return <Badge className="bg-red-500 hover:bg-red-600">Törlés</Badge>
       case 'login': return <Badge variant="outline" className="border-green-500 text-green-500">Belépés</Badge>
       case 'logout': return <Badge variant="outline" className="border-gray-500 text-gray-500">Kilépés</Badge>
+      case 'export': return <Badge className="bg-amber-500 hover:bg-amber-600">Export</Badge>
       default: return <Badge variant="secondary">{action}</Badge>
     }
   }
@@ -214,6 +225,7 @@ export default function ActivityLogsPage() {
                     <SelectItem value="all">Összes</SelectItem>
                     <SelectItem value="login">Belépés</SelectItem>
                     <SelectItem value="logout">Kilépés</SelectItem>
+                    <SelectItem value="export">Export</SelectItem>
                     <SelectItem value="create">Létrehozás</SelectItem>
                     <SelectItem value="update">Módosítás</SelectItem>
                     <SelectItem value="delete">Törlés</SelectItem>
