@@ -26,12 +26,14 @@ import { useTheme } from "next-themes"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/language-provider"
 
 type SettingsTab = "profile" | "appearance" | "notifications" | "security" | "data" | "about"
 
 export function SettingsContent() {
   const { partners, ads } = useStore()
   const { theme, setTheme } = useTheme()
+  const { locale, setLocale, t } = useLanguage()
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile")
   
   const [confirmText, setConfirmText] = useState("")
@@ -40,9 +42,10 @@ export function SettingsContent() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
   const [importing, setImporting] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null; avatarUrl?: string | null; themePreference?: "light" | "dark" } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null; avatarUrl?: string | null; themePreference?: "light" | "dark"; localePreference?: "hu" | "en" } | null>(null)
   const [displayName, setDisplayName] = useState("")
   const [savingTheme, setSavingTheme] = useState(false)
+  const [savingLocale, setSavingLocale] = useState(false)
   const [savingName, setSavingName] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -69,14 +72,18 @@ export function SettingsContent() {
           role: data.role ?? null,
           avatarUrl: data.avatarUrl ?? null,
           themePreference: data.themePreference === "light" ? "light" : "dark",
+          localePreference: data.localePreference === "en" ? "en" : "hu",
         })
         setDisplayName(data.displayName ?? "")
         if (data.themePreference === "light" || data.themePreference === "dark") {
           setTheme(data.themePreference)
         }
+        if (data.localePreference === "hu" || data.localePreference === "en") {
+          setLocale(data.localePreference)
+        }
       } catch {}
     })()
-  }, [setTheme])
+  }, [setTheme, setLocale])
 
   const handleThemeChange = async (value: string) => {
     if (value !== "light" && value !== "dark") return
@@ -96,12 +103,39 @@ export function SettingsContent() {
         return
       }
       setMe((prev) => (prev ? { ...prev, themePreference: value } : prev))
-      toast.success('Téma frissítve')
+      toast.success(t("settings.themeSaved", "Téma frissítve"))
     } catch {
       setTheme(previousTheme === "light" ? "light" : "dark")
       toast.error('Szerver hiba')
     } finally {
       setSavingTheme(false)
+    }
+  }
+
+  const handleLanguageChange = async (value: string) => {
+    if (value !== "hu" && value !== "en") return
+    const previousLocale = locale
+    setLocale(value)
+    setSavingLocale(true)
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localePreference: value }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setLocale(previousLocale)
+        toast.error((data as any).error || 'Sikertelen nyelv mentés')
+        return
+      }
+      setMe((prev) => (prev ? { ...prev, localePreference: value } : prev))
+      toast.success(t("settings.languageSaved", "Nyelv frissítve"))
+    } catch {
+      setLocale(previousLocale)
+      toast.error('Szerver hiba')
+    } finally {
+      setSavingLocale(false)
     }
   }
 
@@ -305,12 +339,12 @@ export function SettingsContent() {
   }
 
   const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
-    { id: "profile", label: "Profil", icon: User },
-    { id: "appearance", label: "Megjelenés", icon: Monitor },
-    { id: "notifications", label: "Értesítések", icon: Bell },
-    { id: "security", label: "Biztonság", icon: Shield },
-    { id: "data", label: "Adatok", icon: Database },
-    { id: "about", label: "Névjegy", icon: Info },
+    { id: "profile", label: locale === "en" ? "Profile" : "Profil", icon: User },
+    { id: "appearance", label: locale === "en" ? "Appearance" : "Megjelenés", icon: Monitor },
+    { id: "notifications", label: locale === "en" ? "Notifications" : "Értesítések", icon: Bell },
+    { id: "security", label: locale === "en" ? "Security" : "Biztonság", icon: Shield },
+    { id: "data", label: locale === "en" ? "Data" : "Adatok", icon: Database },
+    { id: "about", label: locale === "en" ? "About" : "Névjegy", icon: Info },
   ]
 
   return (
@@ -386,15 +420,15 @@ export function SettingsContent() {
         {activeTab === "appearance" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
-              <h3 className="text-lg font-medium">Megjelenés</h3>
-              <p className="text-sm text-muted-foreground">A felület testreszabása.</p>
+              <h3 className="text-lg font-medium">{t("settings.appearanceTitle", "Megjelenés")}</h3>
+              <p className="text-sm text-muted-foreground">{t("settings.appearanceDesc", "A felület testreszabása.")}</p>
             </div>
             <Separator />
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Téma</Label>
-                  <p className="text-xs text-muted-foreground">Válassz a világos és sötét mód között</p>
+                  <Label className="text-base">{t("settings.themeLabel", "Téma")}</Label>
+                  <p className="text-xs text-muted-foreground">{t("settings.themeDesc", "Válassz a világos és sötét mód között")}</p>
                 </div>
                 <Select value={theme === "light" ? "light" : "dark"} onValueChange={handleThemeChange} disabled={savingTheme}>
                   <SelectTrigger className="w-[180px]">
@@ -407,17 +441,18 @@ export function SettingsContent() {
                 </Select>
               </div>
               <Separator />
-              <div className="flex items-center justify-between opacity-50 pointer-events-none">
+              <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Nyelv</Label>
-                  <p className="text-xs text-muted-foreground">Az alkalmazás alapértelmezett nyelve</p>
+                  <Label className="text-base">{t("settings.languageLabel", "Nyelv")}</Label>
+                  <p className="text-xs text-muted-foreground">{t("settings.languageDesc", "Az alkalmazás felületének nyelve")}</p>
                 </div>
-                <Select value="hu" disabled>
+                <Select value={locale} onValueChange={handleLanguageChange} disabled={savingLocale}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Nyelv" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hu"><span className="flex items-center gap-2"><Languages className="h-4 w-4"/> Magyar</span></SelectItem>
+                    <SelectItem value="hu"><span className="flex items-center gap-2"><Languages className="h-4 w-4"/> {t("settings.langHu", "Magyar")}</span></SelectItem>
+                    <SelectItem value="en"><span className="flex items-center gap-2"><Languages className="h-4 w-4"/> {t("settings.langEn", "Angol")}</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/auth"
-import { getUserByUsername, setDisplayName, setThemePreference } from "@/lib/db"
+import { getUserByUsername, setDisplayName, setThemePreference, setLocalePreference } from "@/lib/db"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
@@ -17,6 +17,7 @@ export async function GET(req: Request) {
     role: user.role ?? 'user',
     avatarUrl: user.avatar_url ?? null,
     themePreference: user.theme_preference ?? 'dark',
+    localePreference: user.locale_preference ?? 'hu',
   })
 }
 
@@ -27,13 +28,24 @@ export async function PATCH(req: Request) {
   if (!user) return NextResponse.json({ error: "Felhasználó nem található" }, { status: 404 })
   try {
     const body = await req.json()
-    const { displayName, themePreference } = body as { displayName?: string; themePreference?: string }
+    const { displayName, themePreference, localePreference } = body as {
+      displayName?: string
+      themePreference?: string
+      localePreference?: string
+    }
 
     if (themePreference !== undefined) {
       if (themePreference !== "light" && themePreference !== "dark") {
         return NextResponse.json({ error: "Érvénytelen téma" }, { status: 400 })
       }
       setThemePreference(user.id, themePreference)
+    }
+
+    if (localePreference !== undefined) {
+      if (localePreference !== "hu" && localePreference !== "en") {
+        return NextResponse.json({ error: "Érvénytelen nyelv" }, { status: 400 })
+      }
+      setLocalePreference(user.id, localePreference)
     }
 
     if (displayName !== undefined) {
@@ -43,7 +55,7 @@ export async function PATCH(req: Request) {
       setDisplayName(user.id, displayName.trim())
     }
 
-    if (displayName === undefined && themePreference === undefined) {
+    if (displayName === undefined && themePreference === undefined && localePreference === undefined) {
       return NextResponse.json({ error: "Nincs módosítandó mező" }, { status: 400 })
     }
 

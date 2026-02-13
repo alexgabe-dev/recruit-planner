@@ -3,8 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore } from "@/lib/db-store"
 import { Bell, Play, Clock } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 export function NotificationsList() {
+  const { t } = useLanguage()
   const { ads, partners } = useStore()
 
   const today = new Date()
@@ -45,11 +47,11 @@ export function NotificationsList() {
     <Card className="border-border bg-card">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
         <Bell className="h-4 w-4 text-muted-foreground" />
-        <CardTitle className="text-sm font-medium text-foreground">Mai események</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">{t("dashboard.todayEvents", "Mai események")}</CardTitle>
       </CardHeader>
       <CardContent>
         {notifications.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nincsenek mai események</p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.noTodayEvents", "Nincsenek mai események")}</p>
         ) : (
           <div className="space-y-3">
             {notifications.map((notif) => (
@@ -64,7 +66,7 @@ export function NotificationsList() {
                   <p className="text-xs text-muted-foreground">
                     {notif!.partner?.name} - {notif!.partner?.office}
                   </p>
-                  <p className="text-xs text-muted-foreground">{notif!.type === "start" ? "Ma indul" : "Ma lejár"}</p>
+                  <p className="text-xs text-muted-foreground">{notif!.type === "start" ? t("dashboard.startsToday", "Ma indul") : t("dashboard.endsToday", "Ma lejár")}</p>
                 </div>
               </div>
             ))}

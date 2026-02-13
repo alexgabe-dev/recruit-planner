@@ -8,8 +8,10 @@ import { RecentAds } from "./recent-ads"
 import { useEffect, useState } from "react"
 import type { DashboardStats } from "@/lib/types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useLanguage } from "@/components/language-provider"
 
 export function DashboardContent() {
+  const { t } = useLanguage()
   const { ads, partners, getDashboardStats, isLoading, error } = useStore()
   const [stats, setStats] = useState<DashboardStats>({
     activeAds: 0,
@@ -43,10 +45,10 @@ export function DashboardContent() {
 
   if (isLoadingData || isLoading) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Üdvözöljük a toborzási hirdetéskezelő rendszerben</p>
+      <div className="space-y-6">
+        <div>
+        <h1 className="text-2xl font-bold text-foreground">{t("page.dashboardTitle", "Dashboard")}</h1>
+        <p className="text-muted-foreground">{t("page.dashboardDesc", "Üdvözöljük a toborzási hirdetéskezelő rendszerben")}</p>
       </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -74,9 +76,9 @@ export function DashboardContent() {
    if (error) {
      return (
        <div className="space-y-6">
-         <div>
-           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-           <p className="text-muted-foreground">Üdvözöljük a toborzási hirdetéskezelő rendszerben</p>
+       <div>
+           <h1 className="text-2xl font-bold text-foreground">{t("page.dashboardTitle", "Dashboard")}</h1>
+           <p className="text-muted-foreground">{t("page.dashboardDesc", "Üdvözöljük a toborzási hirdetéskezelő rendszerben")}</p>
          </div>
          
          <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
@@ -89,8 +91,8 @@ export function DashboardContent() {
    return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Üdvözöljük a toborzási hirdetéskezelő rendszerben</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("page.dashboardTitle", "Dashboard")}</h1>
+        <p className="text-muted-foreground">{t("page.dashboardDesc", "Üdvözöljük a toborzási hirdetéskezelő rendszerben")}</p>
       </div>
 
       <StatsCards stats={stats} />

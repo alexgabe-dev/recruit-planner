@@ -9,6 +9,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { LanguageProvider } from "@/components/language-provider"
 
 export const metadata: Metadata = {
   title: "Hírdetéskezelő",
@@ -42,8 +43,10 @@ export default function RootLayout({
     <html lang="hu" suppressHydrationWarning>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {children}
-          <Toaster position="top-center" />
+          <LanguageProvider>
+            {children}
+            <Toaster position="top-center" />
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

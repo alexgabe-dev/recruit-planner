@@ -99,6 +99,7 @@ export function initializeDatabase() {
       role TEXT DEFAULT 'user',
       status TEXT DEFAULT 'pending',
       theme_preference TEXT DEFAULT 'dark',
+      locale_preference TEXT DEFAULT 'hu',
       approval_token TEXT,
       reset_token TEXT,
       reset_expires DATETIME,
@@ -155,6 +156,7 @@ export function initializeDatabase() {
   if (!have.has('role')) database.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
   if (!have.has('status')) database.exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'pending'")
   if (!have.has('theme_preference')) database.exec("ALTER TABLE users ADD COLUMN theme_preference TEXT DEFAULT 'dark'")
+  if (!have.has('locale_preference')) database.exec("ALTER TABLE users ADD COLUMN locale_preference TEXT DEFAULT 'hu'")
   if (!have.has('approval_token')) database.exec("ALTER TABLE users ADD COLUMN approval_token TEXT")
   if (!have.has('reset_token')) database.exec("ALTER TABLE users ADD COLUMN reset_token TEXT")
   if (!have.has('reset_expires')) database.exec("ALTER TABLE users ADD COLUMN reset_expires DATETIME")
@@ -481,6 +483,7 @@ export interface User {
   role?: string | null
   status?: string | null
   theme_preference?: 'light' | 'dark' | null
+  locale_preference?: 'hu' | 'en' | null
   approval_token?: string | null
   reset_token?: string | null
   reset_expires?: Date | null
@@ -491,21 +494,21 @@ export interface User {
 
 export function getUserByUsername(username: string): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, theme_preference, display_name, avatar_url FROM users WHERE username = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, theme_preference, locale_preference, display_name, avatar_url FROM users WHERE username = ?')
   const row = stmt.get(username) as User | undefined
   return row ?? null
 }
 
 export function getUserById(id: number): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, theme_preference, display_name, avatar_url FROM users WHERE id = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, theme_preference, locale_preference, display_name, avatar_url FROM users WHERE id = ?')
   const row = stmt.get(id) as User | undefined
   return row ?? null
 }
 
 export function getUserByEmail(email: string): User | null {
   const database = getDatabase()
-  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, theme_preference FROM users WHERE email = ?')
+  const stmt = database.prepare('SELECT id, username, hashed_password, email, role, status, theme_preference, locale_preference FROM users WHERE email = ?')
   const row = stmt.get(email) as User | undefined
   return row ?? null
 }
@@ -577,6 +580,11 @@ export function setAvatarUrl(userId: number, url: string): void {
 export function setThemePreference(userId: number, theme: 'light' | 'dark'): void {
   const database = getDatabase()
   database.prepare('UPDATE users SET theme_preference = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(theme, userId)
+}
+
+export function setLocalePreference(userId: number, locale: 'hu' | 'en'): void {
+  const database = getDatabase()
+  database.prepare('UPDATE users SET locale_preference = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(locale, userId)
 }
 
 export function updateLastSeen(userId: number): void {

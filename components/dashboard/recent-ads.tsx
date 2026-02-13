@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore } from "@/lib/db-store"
 import { TypeBadge } from "@/components/ui/type-badge"
 import { Clock } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 export function RecentAds() {
+  const { t } = useLanguage()
   const { ads, partners } = useStore()
 
   const recentAds = [...ads]
@@ -20,7 +22,7 @@ export function RecentAds() {
     <Card className="border-border bg-card">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
         <Clock className="h-4 w-4 text-muted-foreground" />
-        <CardTitle className="text-sm font-medium text-foreground">Legújabb hirdetések</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">{t("dashboard.latestAds", "Legújabb hirdetések")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

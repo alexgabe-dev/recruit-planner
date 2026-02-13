@@ -43,10 +43,12 @@ import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns/format"
 import { hu } from "date-fns/locale/hu"
 import { DateRange } from "react-day-picker"
+import { useLanguage } from "@/components/language-provider"
 
 type AdWithPartner = Ad & { partner: Partner; status: AdStatus }
 
 export function AdsTable() {
+  const { t, locale } = useLanguage()
   const { ads, partners, updateAd, deleteAd } = useStore()
   const [role, setRole] = useState<string | null>(null)
   const [me, setMe] = useState<any>(null)
@@ -476,7 +478,7 @@ export function AdsTable() {
         }),
       })
     } catch {}
-    toast.success("Excel fájl sikeresen exportálva!")
+    toast.success(t("ads.exportSuccess", "Excel fájl sikeresen exportálva!"))
   }
 
   const clearFilters = () => {
@@ -499,7 +501,7 @@ export function AdsTable() {
         <div className="relative flex-1 lg:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Keresés munkakör, hirdetés, partner..."
+            placeholder={t("ads.searchPlaceholder", "Keresés munkakör, hirdetés, partner...")}
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="pl-9"
@@ -511,21 +513,21 @@ export function AdsTable() {
           {me?.role !== 'viewer' && (
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Új hirdetés
+              {t("ads.newAd", "Új hirdetés")}
             </Button>
           )}
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            CSV export
+            {t("ads.exportCsv", "CSV export")}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Opcionális oszlopok" title="Opcionális oszlopok">
+              <Button variant="outline" size="icon" aria-label={t("ads.optionalColumns", "Opcionális oszlopok")} title={t("ads.optionalColumns", "Opcionális oszlopok")}>
                 <Columns className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Opcionális oszlopok</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("ads.optionalColumns", "Opcionális oszlopok")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {table
                 .getAllColumns()
@@ -568,8 +570,8 @@ export function AdsTable() {
             (showFilters || hasActiveFilters) && "border-primary text-primary bg-primary/10"
           )}
           onClick={() => setShowFilters((prev) => !prev)}
-          aria-label="Szűrők megjelenítése"
-          title="Szűrők"
+          aria-label={t("ads.filters", "Szűrők")}
+          title={t("ads.filters", "Szűrők")}
         >
           <Filter className="h-4 w-4" />
         </Button>
@@ -592,7 +594,7 @@ export function AdsTable() {
                       "h-10 w-10 shrink-0",
                       dateRange && "border-primary text-primary bg-primary/10"
                     )}
-                    title={dateRange?.from ? (dateRange.to ? `${format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })} - ${format(dateRange.to, 'yyyy. MM. dd.', { locale: hu })}` : format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })) : "Időszak választása"}
+                    title={dateRange?.from ? (dateRange.to ? `${format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })} - ${format(dateRange.to, 'yyyy. MM. dd.', { locale: hu })}` : format(dateRange.from, 'yyyy. MM. dd.', { locale: hu })) : t("ads.period", "Időszak választása")}
                   >
                     <CalendarIcon className="h-4 w-4" />
                   </Button>
@@ -612,10 +614,10 @@ export function AdsTable() {
 
               <Select value={officeFilter} onValueChange={setOfficeFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Iroda" />
+                  <SelectValue placeholder={t("ads.office", "Iroda")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Összes iroda</SelectItem>
+                  <SelectItem value="all">{t("ads.allOffice", "Összes iroda")}</SelectItem>
                   {offices.map((office) => (
                     <SelectItem key={office} value={office}>
                       {office}
@@ -626,10 +628,10 @@ export function AdsTable() {
 
               <Select value={partnerFilter} onValueChange={setPartnerFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Partner" />
+                  <SelectValue placeholder={t("ads.partner", "Partner")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Összes partner</SelectItem>
+                  <SelectItem value="all">{t("ads.allPartner", "Összes partner")}</SelectItem>
                   {partnerNames.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}
@@ -640,10 +642,10 @@ export function AdsTable() {
 
               <Select value={businessAreaFilter} onValueChange={setBusinessAreaFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Üzletág" />
+                  <SelectValue placeholder={t("ads.businessArea", "Üzletág")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Összes üzletág</SelectItem>
+                  <SelectItem value="all">{t("ads.allBusinessArea", "Összes üzletág")}</SelectItem>
                   {businessAreas.map((businessArea) => (
                     <SelectItem key={businessArea} value={businessArea}>
                       {businessArea}
@@ -654,10 +656,10 @@ export function AdsTable() {
 
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Típus" />
+                  <SelectValue placeholder={t("ads.type", "Típus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Összes típus</SelectItem>
+                  <SelectItem value="all">{t("ads.allType", "Összes típus")}</SelectItem>
                   {adTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
@@ -668,10 +670,10 @@ export function AdsTable() {
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Státusz" />
+                  <SelectValue placeholder={t("ads.status", "Státusz")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Összes státusz</SelectItem>
+                  <SelectItem value="all">{t("ads.allStatus", "Összes státusz")}</SelectItem>
                   {statuses.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
@@ -682,14 +684,14 @@ export function AdsTable() {
 
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-                  Szűrők törlése
+                  {t("ads.clearFilters", "Szűrők törlése")}
                 </Button>
               )}
           </div>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{filteredData.length} hirdetés</span>
+          <span className="text-sm text-muted-foreground">{filteredData.length} {locale === "en" ? "ads" : "hirdetés"}</span>
           {role === 'viewer' && <WarningDialog />}
         </div>
       </div>
@@ -725,7 +727,7 @@ export function AdsTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Nincs találat
+                  {t("ads.noResult", "Nincs találat")}
                 </TableCell>
               </TableRow>
             )}
@@ -757,7 +759,7 @@ export function AdsTable() {
       >
         <div className="flex items-center gap-2 border-r pr-2 mr-2">
           <span className="text-sm font-medium px-2">
-            {Object.keys(rowSelection).length} kiválasztva
+            {Object.keys(rowSelection).length} {t("ads.selectedCount", "kiválasztva")}
           </span>
           <Button variant="ghost" size="icon" onClick={() => setRowSelection({})} className="h-8 w-8">
             <X className="h-4 w-4" />
@@ -770,7 +772,7 @@ export function AdsTable() {
           className="text-orange-600 hover:text-orange-700"
         >
           <Ban className="mr-2 h-4 w-4" />
-          Lezárás
+          {t("ads.close", "Lezárás")}
         </Button>
         <Button
           variant="destructive"
@@ -778,7 +780,7 @@ export function AdsTable() {
           onClick={() => setIsBulkDeleteOpen(true)}
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Törlés
+          {t("ads.delete", "Törlés")}
         </Button>
       </div>
 
@@ -791,9 +793,9 @@ export function AdsTable() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Mégse</AlertDialogCancel>
+            <AlertDialogCancel>{t("ads.cancel", "Mégse")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Törlés
+              {t("ads.delete", "Törlés")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

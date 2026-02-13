@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import SplitText from "@/components/SplitText"
 import { useState, useEffect } from "react"
+import { useLanguage } from "@/components/language-provider"
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/advertisements", label: "Hirdetések", icon: Table2 },
-  { href: "/partners", label: "Partnerek", icon: Building2 },
-  { href: "/settings", label: "Beállítások", icon: Settings },
+  { href: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { href: "/advertisements", labelKey: "nav.advertisements", icon: Table2 },
+  { href: "/partners", labelKey: "nav.partners", icon: Building2 },
+  { href: "/settings", labelKey: "nav.settings", icon: Settings },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { t } = useLanguage()
   const [collapsed, setCollapsed] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; avatarUrl?: string | null; role?: string } | null>(null)
@@ -50,9 +52,9 @@ export function Sidebar() {
 
   const displayedNavItems = [...navItems]
   if (me?.role === 'admin') {
-    displayedNavItems.push({ href: "/admin/users", label: "Felhasználók", icon: Users })
-    displayedNavItems.push({ href: "/admin/notifications", label: "Értesítések", icon: Megaphone })
-    displayedNavItems.push({ href: "/admin/logs", label: "Napló", icon: ClipboardList })
+    displayedNavItems.push({ href: "/admin/users", labelKey: "nav.users", icon: Users })
+    displayedNavItems.push({ href: "/admin/notifications", labelKey: "nav.notifications", icon: Megaphone })
+    displayedNavItems.push({ href: "/admin/logs", labelKey: "nav.logs", icon: ClipboardList })
   }
 
   return (
@@ -66,7 +68,7 @@ export function Sidebar() {
         {loggingOut && (
           <div className="fixed inset-0 z-[60] grid place-items-center bg-black/90 animate-in fade-in duration-300">
             <SplitText
-              text="Viszlát!"
+              text={t("nav.goodbye", "Viszlát!")}
               className="text-white text-3xl md:text-5xl font-bold text-center"
               delay={60}
               duration={0.5}
@@ -84,10 +86,10 @@ export function Sidebar() {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <Avatar className="size-8">
-                <AvatarImage src={me?.avatarUrl ?? "/placeholder-user.jpg"} alt={me?.username ?? "Felhasználó"} />
+                <AvatarImage src={me?.avatarUrl ?? "/placeholder-user.jpg"} alt={me?.username ?? t("nav.userFallback", "Felhasználó")} />
                 <AvatarFallback>{(me?.username?.slice(0, 2)?.toUpperCase()) ?? "TE"}</AvatarFallback>
               </Avatar>
-              <span className="font-semibold text-sidebar-foreground">{me?.displayName || me?.username || "Felhasználó"}</span>
+              <span className="font-semibold text-sidebar-foreground">{me?.displayName || me?.username || t("nav.userFallback", "Felhasználó")}</span>
             </div>
           )}
           <Button
@@ -117,7 +119,7 @@ export function Sidebar() {
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && <span>{t(item.labelKey)}</span>}
               </Link>
             )
           })}
@@ -141,7 +143,7 @@ export function Sidebar() {
                 }, 800)
               }}
             >
-              <Button variant="outline" className="w-full">Kijelentkezés</Button>
+              <Button variant="outline" className="w-full">{t("nav.logout", "Kijelentkezés")}</Button>
             </form>
             <p className="text-xs text-sidebar-foreground/50">© Gábor Sándor - 2025</p>
           </div>

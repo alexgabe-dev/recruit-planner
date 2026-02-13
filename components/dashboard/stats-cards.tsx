@@ -1,36 +1,38 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DashboardStats } from "@/lib/types"
 import { Activity, Calendar, Clock, Building2 } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 interface StatsCardsProps {
   stats: DashboardStats
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
+  const { t } = useLanguage()
   const cards = [
     {
-      title: "Aktív kampányok",
+      title: t("dashboard.activeCampaigns", "Aktív kampányok"),
       value: stats.activeAds,
       icon: Activity,
       color: "text-[oklch(0.7_0.18_145)]",
       bgColor: "bg-[oklch(0.7_0.18_145/0.1)]",
     },
     {
-      title: "Ma indul",
+      title: t("dashboard.startingToday", "Ma indul"),
       value: stats.scheduledToday,
       icon: Calendar,
       color: "text-[oklch(0.65_0.2_250)]",
       bgColor: "bg-[oklch(0.65_0.2_250/0.1)]",
     },
     {
-      title: "Hamarosan lejár",
+      title: t("dashboard.expiringSoon", "Hamarosan lejár"),
       value: stats.endingSoon,
       icon: Clock,
       color: "text-[oklch(0.75_0.15_45)]",
       bgColor: "bg-[oklch(0.75_0.15_45/0.1)]",
     },
     {
-      title: "Partnerek",
+      title: t("dashboard.partners", "Partnerek"),
       value: stats.totalPartners,
       icon: Building2,
       color: "text-foreground",

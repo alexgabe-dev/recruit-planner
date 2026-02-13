@@ -8,12 +8,14 @@ import { createPortal } from "react-dom"
 import { useLoadData } from "@/lib/db-store"
 import { Clock as ClockIcon } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useLanguage } from "@/components/language-provider"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
   const [now, setNow] = useState(new Date())
   const isLoadingData = useLoadData()
   const { setTheme } = useTheme()
+  const { setLocale } = useLanguage()
 
   useEffect(() => {
     setMounted(true)
@@ -33,9 +35,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         if (data?.themePreference === "light" || data?.themePreference === "dark") {
           setTheme(data.themePreference)
         }
+        if (data?.localePreference === "hu" || data?.localePreference === "en") {
+          setLocale(data.localePreference)
+        }
       } catch {}
     })()
-  }, [setTheme])
+  }, [setTheme, setLocale])
 
   if (!mounted || isLoadingData) {
     return (

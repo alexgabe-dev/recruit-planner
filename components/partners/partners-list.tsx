@@ -19,8 +19,10 @@ import { PartnerFormDialog } from "./partner-form-dialog"
 import { DeletePartnerDialog } from "./delete-partner-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useLanguage } from "@/components/language-provider"
 
 export function PartnersList() {
+  const { t, locale } = useLanguage()
   const { partners, ads } = useStore()
   const [role, setRole] = useState<string | null>(null)
   const [me, setMe] = useState<any>(null)
@@ -85,7 +87,7 @@ export function PartnersList() {
         <div className="relative flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Keresés partner vagy iroda..."
+            placeholder={t("partners.searchPlaceholder", "Keresés partner vagy iroda...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -94,7 +96,7 @@ export function PartnersList() {
         {role !== 'viewer' && (
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Új partner
+            {t("partners.newPartner", "Új partner")}
           </Button>
         )}
       </div>
@@ -109,7 +111,7 @@ export function PartnersList() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{partners.length}</p>
-                <p className="text-sm text-muted-foreground">Összes partner</p>
+                <p className="text-sm text-muted-foreground">{t("partners.totalPartners", "Összes partner")}</p>
               </div>
             </div>
           </CardContent>
@@ -122,7 +124,7 @@ export function PartnersList() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{[...new Set(partners.map((p) => p.office))].length}</p>
-                <p className="text-sm text-muted-foreground">Irodák száma</p>
+                <p className="text-sm text-muted-foreground">{t("partners.officesCount", "Irodák száma")}</p>
               </div>
             </div>
           </CardContent>
@@ -135,7 +137,7 @@ export function PartnersList() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{partnersWithStats.reduce((acc, p) => acc + p.activeAds, 0)}</p>
-                <p className="text-sm text-muted-foreground">Aktív hirdetés</p>
+                <p className="text-sm text-muted-foreground">{t("partners.activeAds", "Aktív hirdetés")}</p>
               </div>
             </div>
           </CardContent>
@@ -145,17 +147,17 @@ export function PartnersList() {
       {/* Partners Table */}
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-lg">Partnerek listája</CardTitle>
+          <CardTitle className="text-lg">{t("partners.listTitle", "Partnerek listája")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-muted/50">Partner neve</TableHead>
-                  <TableHead className="bg-muted/50">Iroda</TableHead>
-                  <TableHead className="bg-muted/50 text-center">Hirdetések</TableHead>
-                  <TableHead className="bg-muted/50 text-center">Aktív</TableHead>
+                  <TableHead className="bg-muted/50">{t("partners.partnerName", "Partner neve")}</TableHead>
+                  <TableHead className="bg-muted/50">{t("ads.office", "Iroda")}</TableHead>
+                  <TableHead className="bg-muted/50 text-center">{t("partners.adsCount", "Hirdetések")}</TableHead>
+                  <TableHead className="bg-muted/50 text-center">{t("partners.active", "Aktív")}</TableHead>
                   <TableHead className="bg-muted/50 w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,7 +165,7 @@ export function PartnersList() {
                 {filteredPartners.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                      Nincs találat
+                      {locale === "en" ? "No results" : "Nincs találat"}
                     </TableCell>
                   </TableRow>
                 ) : (
