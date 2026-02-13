@@ -7,11 +7,13 @@ import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { useLoadData } from "@/lib/db-store"
 import { Clock as ClockIcon } from "lucide-react"
+import { useTheme } from "next-themes"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
   const [now, setNow] = useState(new Date())
   const isLoadingData = useLoadData()
+  const { setTheme } = useTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -21,6 +23,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: "no-store" })
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.themePreference === "light" || data?.themePreference === "dark") {
+          setTheme(data.themePreference)
+        }
+      } catch {}
+    })()
+  }, [setTheme])
 
   if (!mounted || isLoadingData) {
     return (

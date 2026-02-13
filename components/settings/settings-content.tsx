@@ -40,8 +40,9 @@ export function SettingsContent() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [changing, setChanging] = useState(false)
   const [importing, setImporting] = useState(false)
-  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null; avatarUrl?: string | null } | null>(null)
+  const [me, setMe] = useState<{ username: string; email: string | null; displayName: string | null; role?: string | null; avatarUrl?: string | null; themePreference?: "light" | "dark" } | null>(null)
   const [displayName, setDisplayName] = useState("")
+  const [savingTheme, setSavingTheme] = useState(false)
   const [savingName, setSavingName] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -61,11 +62,48 @@ export function SettingsContent() {
         const res = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        setMe({ username: data.username, email: data.email ?? null, displayName: data.displayName ?? null, role: data.role ?? null, avatarUrl: data.avatarUrl ?? null })
+        setMe({
+          username: data.username,
+          email: data.email ?? null,
+          displayName: data.displayName ?? null,
+          role: data.role ?? null,
+          avatarUrl: data.avatarUrl ?? null,
+          themePreference: data.themePreference === "light" ? "light" : "dark",
+        })
         setDisplayName(data.displayName ?? "")
+        if (data.themePreference === "light" || data.themePreference === "dark") {
+          setTheme(data.themePreference)
+        }
       } catch {}
     })()
-  }, [])
+  }, [setTheme])
+
+  const handleThemeChange = async (value: string) => {
+    if (value !== "light" && value !== "dark") return
+    const previousTheme = theme
+    setTheme(value)
+    setSavingTheme(true)
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themePreference: value }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setTheme(previousTheme === "light" ? "light" : "dark")
+        toast.error((data as any).error || 'Sikertelen téma mentés')
+        return
+      }
+      setMe((prev) => (prev ? { ...prev, themePreference: value } : prev))
+      toast.success('Téma frissítve')
+    } catch {
+      setTheme(previousTheme === "light" ? "light" : "dark")
+      toast.error('Szerver hiba')
+    } finally {
+      setSavingTheme(false)
+    }
+  }
 
   const handleResetData = async () => {
     try {
@@ -346,36 +384,30 @@ export function SettingsContent() {
 
         {/* Appearance Tab */}
         {activeTab === "appearance" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
-             <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-start justify-center pt-20 opacity-0 hover:opacity-100 transition-opacity cursor-not-allowed">
-              <span className="bg-background/80 px-3 py-1.5 rounded-full text-sm font-medium border border-border shadow-sm">
-                Fejlesztés alatt
-              </span>
-            </div>
-            <div className="opacity-50 pointer-events-none">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div>
               <h3 className="text-lg font-medium">Megjelenés</h3>
               <p className="text-sm text-muted-foreground">A felület testreszabása.</p>
             </div>
-            <Separator className="opacity-50" />
-            <div className="space-y-6 opacity-50 pointer-events-none">
+            <Separator />
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Téma</Label>
                   <p className="text-xs text-muted-foreground">Válassz a világos és sötét mód között</p>
                 </div>
-                <Select value={theme} onValueChange={setTheme} disabled>
+                <Select value={theme === "light" ? "light" : "dark"} onValueChange={handleThemeChange} disabled={savingTheme}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Válassz témát" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="light"><span className="flex items-center gap-2"><Sun className="h-4 w-4"/> Világos</span></SelectItem>
                     <SelectItem value="dark"><span className="flex items-center gap-2"><Moon className="h-4 w-4"/> Sötét</span></SelectItem>
-                    <SelectItem value="system"><span className="flex items-center gap-2"><Monitor className="h-4 w-4"/> Rendszer</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between opacity-50 pointer-events-none">
                 <div className="space-y-0.5">
                   <Label className="text-base">Nyelv</Label>
                   <p className="text-xs text-muted-foreground">Az alkalmazás alapértelmezett nyelve</p>
