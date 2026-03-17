@@ -145,7 +145,7 @@ export function Sidebar() {
             >
               <Button variant="outline" className="w-full">{t("nav.logout", "Kijelentkezés")}</Button>
             </form>
-            <p className="text-xs text-sidebar-foreground/50">© Gábor Sándor - 2025</p>
+            <p className="text-xs text-sidebar-foreground/50">© Gábor Sándor - 2026</p>
           </div>
         )}
       </div>
