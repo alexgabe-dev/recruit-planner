@@ -71,7 +71,7 @@ export function AdsTable() {
   const [officeFilter, setOfficeFilter] = useState<string>("all")
   const [partnerFilter, setPartnerFilter] = useState<string>("all")
   const [businessAreaFilter, setBusinessAreaFilter] = useState<string>("all")
-  const [typeFilter, setTypeFilter] = useState<string>("all")
+  const [typeFilter, setTypeFilter] = useState<Ad["type"][]>([])
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [showFilters, setShowFilters] = useState(false)
@@ -147,7 +147,7 @@ export function AdsTable() {
       if (officeFilter !== "all" && ad.partner?.office !== officeFilter) return false
       if (partnerFilter !== "all" && ad.partner?.name !== partnerFilter) return false
       if (businessAreaFilter !== "all" && ad.businessArea !== businessAreaFilter) return false
-      if (typeFilter !== "all" && ad.type !== typeFilter) return false
+      if (typeFilter.length > 0 && !typeFilter.includes(ad.type)) return false
       if (statusFilter !== "all" && ad.status !== statusFilter) return false
 
       // Date range filter (Overlap logic)
@@ -176,6 +176,19 @@ export function AdsTable() {
       return true
     })
   }, [data, officeFilter, partnerFilter, businessAreaFilter, typeFilter, statusFilter, globalFilter, dateRange])
+
+  const toggleTypeFilter = (type: Ad["type"]) => {
+    setTypeFilter((current) =>
+      current.includes(type) ? current.filter((item) => item !== type) : [...current, type]
+    )
+  }
+
+  const typeFilterLabel =
+    typeFilter.length === 0
+      ? t("ads.allType", "Összes típus")
+      : typeFilter.length === 1
+        ? typeFilter[0]
+        : `${typeFilter.length} típus`
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("hu-HU", {
@@ -485,13 +498,13 @@ export function AdsTable() {
     setOfficeFilter("all")
     setPartnerFilter("all")
     setBusinessAreaFilter("all")
-    setTypeFilter("all")
+    setTypeFilter([])
     setStatusFilter("all")
     setGlobalFilter("")
     setDateRange(undefined)
   }
 
-  const hasActiveFilters = officeFilter !== "all" || partnerFilter !== "all" || businessAreaFilter !== "all" || typeFilter !== "all" || statusFilter !== "all" || globalFilter !== "" || dateRange !== undefined
+  const hasActiveFilters = officeFilter !== "all" || partnerFilter !== "all" || businessAreaFilter !== "all" || typeFilter.length > 0 || statusFilter !== "all" || globalFilter !== "" || dateRange !== undefined
 
   return (
     <div className="space-y-4">
@@ -654,19 +667,33 @@ export function AdsTable() {
                 </SelectContent>
               </Select>
 
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder={t("ads.type", "Típus")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("ads.allType", "Összes típus")}</SelectItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[170px] justify-between font-normal",
+                      typeFilter.length > 0 && "border-primary text-primary bg-primary/10"
+                    )}
+                  >
+                    <span className="truncate">{typeFilterLabel}</span>
+                    <Filter className="ml-2 h-4 w-4 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[170px]">
+                  <DropdownMenuLabel>{t("ads.type", "Típus")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   {adTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
+                    <DropdownMenuCheckboxItem
+                      key={type}
+                      checked={typeFilter.includes(type)}
+                      onCheckedChange={() => toggleTypeFilter(type)}
+                    >
                       {type}
-                    </SelectItem>
+                    </DropdownMenuCheckboxItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
