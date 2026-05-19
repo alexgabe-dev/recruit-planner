@@ -13,10 +13,10 @@ export function TypeBadge({ type, className }: TypeBadgeProps) {
       variant="outline"
       className={cn(
         "font-medium capitalize",
-        type === "kampány" && "border-[oklch(0.7_0.15_160)] text-[oklch(0.7_0.15_160)]",
-        type === "post" && "border-[oklch(0.65_0.2_300)] text-[oklch(0.65_0.2_300)]",
-        type === "kiemelt post" && "border-[oklch(0.75_0.15_45)] text-[oklch(0.75_0.15_45)]",
-        type === "Profession" && "border-[oklch(0.65_0.18_250)] text-[oklch(0.65_0.18_250)]",
+        type === "kampány" && "border-[rgb(124_58_237/0.24)] bg-[rgb(124_58_237/0.12)] text-[#c4b5fd]",
+        type === "post" && "border-[rgb(56_189_248/0.24)] bg-[rgb(56_189_248/0.1)] text-[#7dd3fc]",
+        type === "kiemelt post" && "border-[rgb(245_158_11/0.24)] bg-[rgb(245_158_11/0.1)] text-[#fbbf24]",
+        type === "Profession" && "border-[rgb(34_197_94/0.24)] bg-[rgb(34_197_94/0.1)] text-[#86efac]",
         className,
       )}
     >

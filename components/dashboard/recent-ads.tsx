@@ -22,12 +22,12 @@ export function RecentAds() {
     <Card className="border-border bg-card">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
         <Clock className="h-4 w-4 text-muted-foreground" />
-        <CardTitle className="text-sm font-medium text-foreground">{t("dashboard.latestAds", "Legújabb hirdetések")}</CardTitle>
+        <CardTitle className="text-sm font-semibold text-foreground">{t("dashboard.latestAds", "Legújabb hirdetések")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {recentAds.map((ad) => (
-            <div key={ad.id} className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3">
+            <div key={ad.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background p-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{ad.positionName}</p>
                 <p className="truncate text-xs text-muted-foreground">{ad.partner?.name}</p>

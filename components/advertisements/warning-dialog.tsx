@@ -97,7 +97,7 @@ export function WarningDialog() {
         <Button 
           variant="destructive" 
           size="icon" 
-          className="h-8 w-8 ml-2 shadow-sm hover:scale-105 transition-transform"
+          className="ml-2 h-8 w-8"
           title="Figyelmeztetés küldése"
         >
           <AlertTriangle className="h-4 w-4" />

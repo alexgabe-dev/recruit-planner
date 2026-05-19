@@ -44,18 +44,18 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   if (!mounted || isLoadingData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="korvo-grid flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="korvo-shell min-h-screen bg-background">
       <Sidebar />
       {mounted && createPortal(
         <div className="fixed top-4 right-4 z-[1000] pointer-events-none">
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-card/80 px-3 py-2 shadow-sm backdrop-blur">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-[0_1px_0_rgb(255_255_255/0.02)]">
             <ClockIcon className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-semibold text-foreground">
               {now.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
@@ -67,8 +67,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>,
         document.body
       )}
-      <main className="pl-16 transition-all duration-300 lg:pl-64">
-        <div className="min-h-screen p-6">{children}</div>
+      <main className="transition-[padding-left] duration-300" style={{ paddingLeft: "var(--sidebar-width, 18rem)" }}>
+        <div className="min-h-screen px-5 py-8 md:px-8 lg:px-10">{children}</div>
       </main>
     </div>
   )

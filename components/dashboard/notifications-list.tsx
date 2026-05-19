@@ -47,7 +47,7 @@ export function NotificationsList() {
     <Card className="border-border bg-card">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
         <Bell className="h-4 w-4 text-muted-foreground" />
-        <CardTitle className="text-sm font-medium text-foreground">{t("dashboard.todayEvents", "Mai események")}</CardTitle>
+        <CardTitle className="text-sm font-semibold text-foreground">{t("dashboard.todayEvents", "Mai események")}</CardTitle>
       </CardHeader>
       <CardContent>
         {notifications.length === 0 ? (
@@ -55,11 +55,11 @@ export function NotificationsList() {
         ) : (
           <div className="space-y-3">
             {notifications.map((notif) => (
-              <div key={notif!.id} className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
+              <div key={notif!.id} className="flex items-start gap-3 rounded-lg border border-border bg-background p-3">
                 {notif!.type === "start" ? (
-                  <Play className="mt-0.5 h-4 w-4 text-[oklch(0.7_0.18_145)]" />
+                  <Play className="mt-0.5 h-4 w-4 text-[#86efac]" />
                 ) : (
-                  <Clock className="mt-0.5 h-4 w-4 text-[oklch(0.75_0.15_45)]" />
+                  <Clock className="mt-0.5 h-4 w-4 text-[#fbbf24]" />
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{notif!.ad.positionName}</p>

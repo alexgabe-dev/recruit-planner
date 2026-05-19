@@ -119,12 +119,12 @@ export default function ActivityLogsPage() {
 
   const getActionBadge = (action: string) => {
     switch (action) {
-      case 'create': return <Badge className="bg-green-500 hover:bg-green-600">Létrehozás</Badge>
-      case 'update': return <Badge className="bg-blue-500 hover:bg-blue-600">Módosítás</Badge>
-      case 'delete': return <Badge className="bg-red-500 hover:bg-red-600">Törlés</Badge>
-      case 'login': return <Badge variant="outline" className="border-green-500 text-green-500">Belépés</Badge>
-      case 'logout': return <Badge variant="outline" className="border-gray-500 text-gray-500">Kilépés</Badge>
-      case 'export': return <Badge className="bg-amber-500 hover:bg-amber-600">Export</Badge>
+      case 'create': return <Badge className="border-[rgb(34_197_94/0.24)] bg-[rgb(34_197_94/0.12)] text-[#86efac]">Létrehozás</Badge>
+      case 'update': return <Badge className="border-[rgb(124_58_237/0.24)] bg-[rgb(124_58_237/0.12)] text-[#c4b5fd]">Módosítás</Badge>
+      case 'delete': return <Badge className="border-[rgb(239_68_68/0.3)] bg-[rgb(239_68_68/0.12)] text-[#fca5a5]">Törlés</Badge>
+      case 'login': return <Badge variant="outline" className="border-success/30 bg-[rgb(34_197_94/0.1)] text-[#86efac]">Belépés</Badge>
+      case 'logout': return <Badge variant="outline" className="border-border text-muted-foreground">Kilépés</Badge>
+      case 'export': return <Badge className="border-warning/30 bg-[rgb(245_158_11/0.12)] text-[#fbbf24]">Export</Badge>
       default: return <Badge variant="secondary">{action}</Badge>
     }
   }
@@ -134,8 +134,9 @@ export default function ActivityLogsPage() {
       <div className="space-y-6 pt-14">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Tevékenységnapló</h1>
-            <p className="text-muted-foreground">A rendszerben történt események részletes listája.</p>
+            <p className="text-xs font-medium uppercase text-[#a78bfa]">Audit trail</p>
+            <h1 className="korvo-page-title">Tevékenységnapló</h1>
+            <p className="korvo-page-description">A rendszerben történt események részletes listája.</p>
           </div>
           <Button onClick={handleExport} variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
@@ -282,7 +283,7 @@ export default function ActivityLogsPage() {
           </CardContent>
         </Card>
 
-        <div className="rounded-md border bg-card">
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>

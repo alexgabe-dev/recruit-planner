@@ -13,10 +13,10 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       className={cn(
         "font-medium",
         status === "Aktív" &&
-          "bg-[oklch(0.7_0.18_145/0.2)] text-[oklch(0.7_0.18_145)] hover:bg-[oklch(0.7_0.18_145/0.3)]",
+          "border-[rgb(34_197_94/0.24)] bg-[rgb(34_197_94/0.12)] text-[#86efac] hover:bg-[rgb(34_197_94/0.16)]",
         status === "Időzített" &&
-          "bg-[oklch(0.65_0.2_250/0.2)] text-[oklch(0.65_0.2_250)] hover:bg-[oklch(0.65_0.2_250/0.3)]",
-        status === "Lejárt" && "bg-muted text-muted-foreground hover:bg-muted/80",
+          "border-[rgb(124_58_237/0.24)] bg-[rgb(124_58_237/0.12)] text-[#c4b5fd] hover:bg-[rgb(124_58_237/0.16)]",
+        status === "Lejárt" && "border-border bg-muted/60 text-muted-foreground hover:bg-muted",
         className,
       )}
     >

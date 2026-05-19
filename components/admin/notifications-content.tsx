@@ -312,7 +312,7 @@ export function NotificationsContent() {
                     {users.length > 0 && <div className="border-t my-1" />}
                     {extraEmails.map(email => (
                       <SelectItem key={`extra-${email}`} value={email}>
-                        📧 {email} (extra)
+                        <span className="flex items-center gap-2"><Mail className="h-4 w-4" /> {email} (extra)</span>
                       </SelectItem>
                     ))}
                   </>

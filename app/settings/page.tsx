@@ -9,9 +9,10 @@ export default function SettingsPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("page.settingsTitle", "Beállítások")}</h1>
-          <p className="text-muted-foreground">{t("page.settingsDesc", "Alkalmazás beállítások kezelése")}</p>
+        <div className="border-b border-border pb-6">
+          <p className="text-xs font-medium uppercase text-[#a78bfa]">Control plane</p>
+          <h1 className="korvo-page-title">{t("page.settingsTitle", "Beállítások")}</h1>
+          <p className="korvo-page-description">{t("page.settingsDesc", "Alkalmazás beállítások kezelése")}</p>
         </div>
         <SettingsContent />
       </div>

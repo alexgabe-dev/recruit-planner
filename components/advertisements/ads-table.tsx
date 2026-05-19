@@ -718,13 +718,13 @@ export function AdsTable() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{filteredData.length} {locale === "en" ? "ads" : "hirdetés"}</span>
+          <span className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground">{filteredData.length} {locale === "en" ? "ads" : "hirdetés"}</span>
           {role === 'viewer' && <WarningDialog />}
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <Table className="w-full table-auto">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -732,7 +732,7 @@ export function AdsTable() {
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={cn("bg-muted/50 whitespace-normal break-words", (header.column.columnDef as any).meta?.className)}
+                    className={cn("bg-background/80 whitespace-normal break-words", (header.column.columnDef as any).meta?.className)}
                   >
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -778,7 +778,7 @@ export function AdsTable() {
 
       <div
         className={cn(
-          "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border bg-background p-2 shadow-lg transition-all duration-300 ease-in-out",
+          "fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-border bg-card p-2 shadow-[0_18px_50px_rgb(0_0_0/0.35)] transition-all duration-300 ease-in-out",
           Object.keys(rowSelection).length > 0 && (role === 'admin' || role === 'user')
             ? "translate-y-0 opacity-100"
             : "translate-y-[150%] opacity-0 pointer-events-none"
@@ -796,7 +796,7 @@ export function AdsTable() {
           variant="secondary"
           size="sm"
           onClick={() => handleBulkStatusChange(false)}
-          className="text-orange-600 hover:text-orange-700"
+          className="text-warning hover:text-warning"
         >
           <Ban className="mr-2 h-4 w-4" />
           {t("ads.close", "Lezárás")}

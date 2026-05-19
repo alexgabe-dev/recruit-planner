@@ -22,13 +22,13 @@ const translations: Record<AppLocale, Dict> = {
     },
     page: {
       advertisementsTitle: "Hirdetések",
-      advertisementsDesc: "Kezelje a toborzási hirdetéseket",
+      advertisementsDesc: "Toborzási kampányok és megjelenések operatív kezelése",
       partnersTitle: "Partnerek",
       partnersDesc: "Kezelje a toborzási partnereket és irodákat",
       settingsTitle: "Beállítások",
       settingsDesc: "Alkalmazás beállítások kezelése",
-      dashboardTitle: "Dashboard",
-      dashboardDesc: "Üdvözöljük a toborzási hirdetéskezelő rendszerben",
+      dashboardTitle: "Command Center",
+      dashboardDesc: "Recruitment kampányok, partnerek és határidők egy kontrollált munkatérben",
     },
     settings: {
       appearanceTitle: "Megjelenés",
@@ -113,13 +113,13 @@ const translations: Record<AppLocale, Dict> = {
     },
     page: {
       advertisementsTitle: "Advertisements",
-      advertisementsDesc: "Manage recruitment advertisements",
+      advertisementsDesc: "Operate recruitment campaigns and placements",
       partnersTitle: "Partners",
       partnersDesc: "Manage recruitment partners and offices",
       settingsTitle: "Settings",
       settingsDesc: "Manage application settings",
-      dashboardTitle: "Dashboard",
-      dashboardDesc: "Welcome to the recruitment ad management system",
+      dashboardTitle: "Command Center",
+      dashboardDesc: "Recruitment campaigns, partners, and deadlines in one controlled workspace",
     },
     settings: {
       appearanceTitle: "Appearance",

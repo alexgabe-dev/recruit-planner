@@ -168,9 +168,9 @@ export default function UsersPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
-        return <Badge variant="destructive" className="gap-1"><Shield className="h-3 w-3" /> Admin</Badge>
+        return <Badge className="gap-1 border-[rgb(124_58_237/0.24)] bg-[rgb(124_58_237/0.12)] text-[#c4b5fd]"><Shield className="h-3 w-3" /> Admin</Badge>
       case 'user':
-        return <Badge variant="default" className="gap-1"><UserIcon className="h-3 w-3" /> User</Badge>
+        return <Badge className="gap-1"><UserIcon className="h-3 w-3" /> User</Badge>
       case 'viewer':
         return <Badge variant="secondary" className="gap-1"><Eye className="h-3 w-3" /> Viewer</Badge>
       case 'visitor':
@@ -183,7 +183,7 @@ export default function UsersPage() {
   const getStatusBadge = (status: string) => {
     if (status === 'active') {
       return (
-        <span className="inline-flex items-center rounded-md border border-green-500/30 bg-green-500/10 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
+        <span className="inline-flex items-center rounded-md border border-success/30 bg-[rgb(34_197_94/0.12)] px-2 py-1 text-xs font-medium text-[#86efac]">
           <CheckCircle className="mr-1 h-3 w-3" />
           Aktív
         </span>
@@ -191,7 +191,7 @@ export default function UsersPage() {
     }
     if (status === 'pending') {
       return (
-        <span className="inline-flex items-center rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-700 dark:text-yellow-400 ring-1 ring-inset ring-yellow-600/20">
+        <span className="inline-flex items-center rounded-md border border-warning/30 bg-[rgb(245_158_11/0.12)] px-2 py-1 text-xs font-medium text-[#fbbf24]">
           <Shield className="mr-1 h-3 w-3" />
           Függőben
         </span>
@@ -215,8 +215,9 @@ export default function UsersPage() {
       <div className="space-y-6 pt-14">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Felhasználók kezelése</h1>
-            <p className="text-muted-foreground">Felhasználók és jogosultságok áttekintése</p>
+            <p className="text-xs font-medium uppercase text-[#a78bfa]">Admin control</p>
+            <h1 className="korvo-page-title">Felhasználók kezelése</h1>
+            <p className="korvo-page-description">Felhasználók és jogosultságok áttekintése</p>
           </div>
           <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
@@ -224,7 +225,7 @@ export default function UsersPage() {
           </Button>
         </div>
 
-        <div className="rounded-md border bg-card">
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -244,7 +245,7 @@ export default function UsersPage() {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <div className={cn("h-2 w-2 rounded-full", isOnline ? "bg-green-500" : "bg-gray-300")} title={isOnline ? "Online" : "Offline"} />
+                        <div className={cn("h-2 w-2 rounded-full", isOnline ? "bg-success" : "bg-muted-foreground/40")} title={isOnline ? "Online" : "Offline"} />
                         {user.username}
                       </div>
                     </TableCell>
@@ -264,7 +265,7 @@ export default function UsersPage() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {user.status === 'pending' && (
-                          <Button size="sm" variant="outline" className="h-8 border-green-500 text-green-600 hover:bg-green-50" onClick={() => handleQuickApprove(user)}>
+                          <Button size="sm" variant="outline" className="h-8 border-success/40 text-[#86efac] hover:bg-[rgb(34_197_94/0.12)]" onClick={() => handleQuickApprove(user)}>
                             Elfogad
                           </Button>
                         )}
@@ -416,8 +417,8 @@ function InviteUserDialog({ open, onOpenChange, onSubmit }: {
           </div>
         ) : (
           <div className="grid gap-4 py-4">
-            <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg border">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-[rgb(34_197_94/0.12)] p-4">
+              <CheckCircle className="h-5 w-5 text-[#86efac]" />
               <div className="text-sm font-medium">Meghívó sikeresen létrehozva!</div>
             </div>
 

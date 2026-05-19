@@ -355,7 +355,7 @@ export function SettingsContent() {
           <Button
             key={tab.id}
             variant={activeTab === tab.id ? "secondary" : "ghost"}
-            className={cn("w-full justify-start gap-3", activeTab === tab.id && "bg-muted font-medium")}
+            className={cn("w-full justify-start gap-3", activeTab === tab.id && "border-primary/30 bg-[rgb(124_58_237/0.12)] font-medium text-foreground")}
             onClick={() => setActiveTab(tab.id)}
           >
             <tab.icon className="h-4 w-4" />
@@ -463,8 +463,8 @@ export function SettingsContent() {
         {/* Notifications Tab */}
         {activeTab === "notifications" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
-             <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-start justify-center pt-20 opacity-0 hover:opacity-100 transition-opacity cursor-not-allowed">
-              <span className="bg-background/80 px-3 py-1.5 rounded-full text-sm font-medium border border-border shadow-sm">
+             <div className="absolute inset-0 z-10 flex cursor-not-allowed items-start justify-center bg-background/70 pt-20 opacity-0 transition-opacity hover:opacity-100">
+              <span className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium">
                 Fejlesztés alatt
               </span>
             </div>
@@ -553,7 +553,7 @@ export function SettingsContent() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">Partnerek</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{partners.length}</div>
+                  <div className="text-2xl font-semibold">{partners.length}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -561,7 +561,7 @@ export function SettingsContent() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">Hirdetések</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{ads.length}</div>
+                  <div className="text-2xl font-semibold">{ads.length}</div>
                 </CardContent>
               </Card>
             </div>
@@ -671,7 +671,7 @@ export function SettingsContent() {
                </div>
                <div className="space-y-1">
                  <p className="text-sm font-medium">Tech Stack</p>
-                 <p className="text-sm text-muted-foreground">Next.js 15, React 19, SQLite, Tailwind</p>
+                 <p className="text-sm text-muted-foreground">Next.js, React, SQLite, Tailwind</p>
                </div>
                <div className="space-y-1">
                  <p className="text-sm font-medium">Fejlesztő</p>
@@ -680,7 +680,7 @@ export function SettingsContent() {
             </div>
             <div className="pt-4">
               <p className="text-xs text-muted-foreground">
-                &copy; pry.hu - Hirdetés rendszerező
+                &copy; 2026
               </p>
             </div>
           </div>

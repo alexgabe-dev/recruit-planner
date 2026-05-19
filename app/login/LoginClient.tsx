@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { KorvoLogo } from "@/components/korvo-logo"
 import SplitText from "@/components/SplitText"
-import Orb from "@/components/Orb"
-import { User, Lock, LogIn, Loader2, CheckCircle2 } from "lucide-react"
+import { User, Lock, LogIn, Loader2 } from "lucide-react"
 
 export default function LoginClient() {
   const router = useRouter()
@@ -111,11 +111,11 @@ export default function LoginClient() {
       )}
 
       {showNameModal && (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <Card className="w-full max-w-md border-border bg-card shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/80 animate-in fade-in duration-300">
+          <Card className="w-full max-w-md border-border bg-card shadow-[0_24px_80px_rgb(0_0_0/0.42)] animate-in zoom-in-95 duration-300">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Hogy szólíthatunk?</CardTitle>
-              <CardDescription>Kérjük, add meg a teljes neved a folytatáshoz</CardDescription>
+              <CardDescription>Kérjük, add meg a keresztneved a folytatáshoz</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={submitDisplayName} className="space-y-4">
@@ -144,91 +144,123 @@ export default function LoginClient() {
         </div>
       )}
 
-      <Card className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 overflow-hidden border-border bg-card/80 backdrop-blur shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Left Column - Visual */}
-        <div className="hidden md:block">
-          <div className="relative flex flex-col justify-end p-8 text-white h-full w-full bg-black/20 min-h-[600px] rounded-r-3xl overflow-hidden">
-            <div className="absolute inset-0 z-0">
-               <Orb hoverIntensity={0.5} rotateOnHover={true} hue={0} forceHoverState={false} />
-            </div>
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            
-            <div className="relative z-10 space-y-3 max-w-lg">
-               <h2 className="text-4xl font-bold leading-tight tracking-tight">Hirdetések egy helyen</h2>
-               <p className="text-lg text-white/90 leading-relaxed font-normal">
-                 Kövesd nyomon minden platformon kampányaidat.
-               </p>
+<div className="w-full max-w-6xl border border-[#27272A] rounded-2xl overflow-hidden bg-[#09090B] animate-in fade-in slide-in-from-bottom-4 duration-700" style={{
+  backgroundImage: `radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.04) 0%, transparent 50%)`
+}}>
+  <div className="grid grid-cols-1 md:grid-cols-[1.35fr_1fr] min-h-screen md:min-h-auto md:min-h-[600px]">
+
+    {/* Left Column */}
+    <div className="hidden md:flex flex-col justify-between bg-[#09090B] p-16">
+      <div className="space-y-4">
+
+        {/* Logo */}
+        <KorvoLogo />
+
+        {/* Label */}
+        <div>
+          {/* Main Headline */}
+          <h2 className="text-5xl font-semibold leading-tight tracking-[-0.04em] text-[#FAFAFA] mb-6">
+            A kampányaid végre{" "}
+            <span className="text-[#7C3AED]">
+              nem Excelben futnak
+            </span>.
+          </h2>
+
+          {/* Supporting Text */}
+          <p className="text-base text-[#A1A1AA] leading-relaxed max-w-md">
+            Egy központi dashboard, ahol a toborzási kampányaid, státuszaid és workflow-jaid egyetlen rendszerben kezelhetők.
+          </p>
+        </div>
+      </div>
+
+            {/* Bottom Indicators */}
+            <div className="space-y-4 pt-8 border-t border-[#27272A]">
+              <div className="flex items-center gap-3 text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
+                <span className="text-[#A1A1AA]">Kampányok szinkronizálva</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
+                <span className="text-[#A1A1AA]">Státuszok élőben</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
+                <span className="text-[#A1A1AA]">Workflow-k összekötve</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Column - Form */}
-        <div className="flex flex-col justify-center p-8 md:p-12 bg-card/50">
-          <CardHeader className="space-y-1 text-center pb-2 px-0">
-            <CardTitle className="text-3xl font-bold tracking-tight">Bejelentkezés</CardTitle>
-            <CardDescription className="text-base">
-              {approved ? "A fiókod jóváhagyva! Jelentkezz be." : "Add meg az adataidat a belépéshez"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6 px-0">
-            <form onSubmit={onSubmit} className="space-y-5">
-              {error && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive text-center font-medium animate-in fade-in slide-in-from-top-2">
-                  {error}
-                </div>
-              )}
-              
-              <div className="space-y-4">
+          {/* Right Column */}
+          <div className="flex flex-col justify-center bg-[#111113] px-8 md:px-12 py-12 md:py-0 border-l border-[#27272A]">
+            <div className="max-w-sm w-full mx-auto md:mx-0">
+              <KorvoLogo className="mb-10 md:hidden" />
+              {/* Header */}
+              <div className="mb-12">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7C3AED] mb-3">Üdv újra.</p>
+                <h1 className="text-4xl font-semibold text-[#FAFAFA] mb-3 leading-tight">
+                  Lépj be a recruitment dashboardodba.
+                </h1>
+                <p className="text-sm text-[#A1A1AA]">
+                  Használd a fiókodat a kampányok, partnerek és státuszok kezeléséhez.
+                </p>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={onSubmit} className="space-y-5">
+                {error && (
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400 text-center font-medium animate-in fade-in slide-in-from-top-2">
+                    {error}
+                  </div>
+                )}
+
+                {/* Email Field */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Felhasználónév</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      value={username} 
-                      onChange={(e) => setUsername(e.target.value)} 
-                      required 
-                      className="pl-9 h-11 transition-all focus:ring-2 focus:ring-primary/20" 
-                      placeholder="Felhasználónév"
+                  <label className="text-sm font-medium text-[#FAFAFA]">E-mail cím</label>
+                  <div className="relative group">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A1A1AA] group-focus-within:text-[#7C3AED] transition-colors" />
+                    <Input
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                      className="pl-10 h-11 w-full bg-[#09090B] border border-[#27272A] text-[#FAFAFA] placeholder:text-[#52525B] rounded-lg focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 transition-all"
+                      placeholder="hello@ceged.hu"
                     />
                   </div>
                 </div>
-                
+
+                {/* Password Field */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Jelszó</label>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="password" 
-                      value={password} 
-                      onChange={(e) => setPassword(e.target.value)} 
-                      required 
-                      className="pl-9 h-11 transition-all focus:ring-2 focus:ring-primary/20" 
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <div className="flex justify-end pt-1">
-                    <Button 
-                      variant="link" 
-                      className="h-auto p-0 text-xs font-normal text-muted-foreground hover:text-primary transition-colors" 
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-[#FAFAFA]">Jelszó</label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 text-xs text-[#A1A1AA] hover:text-[#7C3AED] transition-colors"
                       type="button"
-                      tabIndex={-1}
                       onClick={() => router.push("/forgot-password")}
                     >
                       Elfelejtett jelszó?
                     </Button>
                   </div>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A1A1AA] group-focus-within:text-[#7C3AED] transition-colors" />
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pl-10 h-11 w-full bg-[#09090B] border border-[#27272A] text-[#FAFAFA] placeholder:text-[#52525B] rounded-lg focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-4 pt-2">
+                {/* Submit Button */}
                 <Button 
-                  className="w-full h-11 text-base transition-all active:scale-[0.98] font-semibold shadow-lg shadow-primary/20" 
+                  className="w-full h-11 mt-8 bg-[#7C3AED] hover:bg-[#8B5CF6] text-[#FAFAFA] font-semibold rounded-lg transition-colors duration-200"
                   disabled={loading} 
                   type="submit"
-                  size="lg"
                 >
                   {loading ? (
                     <>
@@ -242,23 +274,25 @@ export default function LoginClient() {
                     </>
                   )}
                 </Button>
-                
-                <div className="text-center text-sm text-muted-foreground">
+
+                {/* Footer */}
+                <p className="text-center text-sm text-[#A1A1AA] pt-4">
                   Nincs még fiókod?{" "}
                   <Button 
-                    variant="link" 
-                    className="h-auto p-0 font-semibold text-primary hover:underline" 
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-[#7C3AED] hover:text-[#8B5CF6] font-medium transition-colors"
                     type="button"
                     onClick={() => router.push("/register")}
                   >
                     Regisztrálj itt
                   </Button>
-                </div>
-              </div>
-            </form>
-          </CardContent>
+                </p>
+              </form>
+            </div>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

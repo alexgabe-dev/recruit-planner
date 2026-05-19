@@ -16,9 +16,10 @@ export default async function NotificationsPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Értesítések kezelése</h1>
-          <p className="text-muted-foreground">Automatikus e-mail értesítések beállítása</p>
+        <div className="border-b border-border pb-6">
+          <p className="text-xs font-medium uppercase text-[#a78bfa]">Admin control</p>
+          <h1 className="korvo-page-title">Értesítések kezelése</h1>
+          <p className="korvo-page-description">Automatikus e-mail értesítések beállítása</p>
         </div>
         <NotificationsContent />
       </div>

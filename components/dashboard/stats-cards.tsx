@@ -14,22 +14,22 @@ export function StatsCards({ stats }: StatsCardsProps) {
       title: t("dashboard.activeCampaigns", "Aktív kampányok"),
       value: stats.activeAds,
       icon: Activity,
-      color: "text-[oklch(0.7_0.18_145)]",
-      bgColor: "bg-[oklch(0.7_0.18_145/0.1)]",
+      color: "text-[#86efac]",
+      bgColor: "bg-[rgb(34_197_94/0.12)]",
     },
     {
       title: t("dashboard.startingToday", "Ma indul"),
       value: stats.scheduledToday,
       icon: Calendar,
-      color: "text-[oklch(0.65_0.2_250)]",
-      bgColor: "bg-[oklch(0.65_0.2_250/0.1)]",
+      color: "text-[#c4b5fd]",
+      bgColor: "bg-[rgb(124_58_237/0.12)]",
     },
     {
       title: t("dashboard.expiringSoon", "Hamarosan lejár"),
       value: stats.endingSoon,
       icon: Clock,
-      color: "text-[oklch(0.75_0.15_45)]",
-      bgColor: "bg-[oklch(0.75_0.15_45/0.1)]",
+      color: "text-[#fbbf24]",
+      bgColor: "bg-[rgb(245_158_11/0.12)]",
     },
     {
       title: t("dashboard.partners", "Partnerek"),
@@ -43,15 +43,15 @@ export function StatsCards({ stats }: StatsCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.title} className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+        <Card key={card.title} className="overflow-hidden border-border bg-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-1">
+            <CardTitle className="text-xs font-medium uppercase text-muted-foreground">{card.title}</CardTitle>
             <div className={`rounded-lg p-2 ${card.bgColor}`}>
               <card.icon className={`h-4 w-4 ${card.color}`} />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{card.value}</div>
+            <div className="text-3xl font-semibold text-foreground">{card.value}</div>
           </CardContent>
         </Card>
       ))}

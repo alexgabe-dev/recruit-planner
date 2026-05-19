@@ -5,10 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { KorvoLogo } from "@/components/korvo-logo"
 import { cn } from "@/lib/utils"
-import Orb from "@/components/Orb"
-import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars"
-import { CheckCircle2, User, Mail, Lock, Loader2, ArrowLeft } from "lucide-react"
+import { CheckCircle2, User, Mail, Lock, Loader2, ArrowLeft, Activity, ShieldCheck, Network } from "lucide-react"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow"
 import { hu } from "date-fns/locale/hu"
@@ -85,18 +84,17 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="relative w-full flex justify-center min-h-screen items-center bg-background p-4">
-      <GravityStarsBackground className="absolute inset-0" />
-      <Card className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 overflow-hidden border-border bg-card/80 backdrop-blur shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="korvo-grid relative flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <Card className="relative z-10 grid w-full max-w-6xl grid-cols-1 overflow-hidden border-border bg-card shadow-[0_24px_80px_rgb(0_0_0/0.42)] animate-in fade-in slide-in-from-bottom-4 duration-700 md:grid-cols-2">
 
         {/* Left Column - Form */}
-        <div className="flex flex-col justify-center p-8 md:p-12 bg-card/50">
+        <div className="flex flex-col justify-center bg-card p-8 md:p-12">
           <CardHeader className="space-y-1 text-center pb-2 px-0">
-            <CardTitle className="text-3xl font-bold tracking-tight">Regisztráció</CardTitle>
+            <CardTitle className="text-3xl font-semibold tracking-normal">Regisztráció</CardTitle>
             <CardDescription className="text-base">
               {success ? "Fiók létrehozása sikeres" : "Készíts új fiókot a rendszer használatához"}
               {isInviteValid && inviteExpiresAt && (
-                <span className="block mt-2 text-sm text-amber-600 font-medium">
+                <span className="mt-2 block text-sm font-medium text-warning">
                   A meghívó lejár: {formatDistanceToNow(new Date(inviteExpiresAt), { locale: hu, addSuffix: true })}
                 </span>
               )}
@@ -105,8 +103,8 @@ export default function RegisterForm() {
           <CardContent className="pt-6 px-0">
             {success ? (
               <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in zoom-in-95 duration-500">
-                <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
-                  <CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-400" />
+                <div className="rounded-full border border-success/30 bg-[rgb(34_197_94/0.12)] p-3">
+                  <CheckCircle2 className="h-12 w-12 text-[#86efac]" />
                 </div>
                 <div className="space-y-2 text-center max-w-xs mx-auto">
                   <h3 className="text-lg font-semibold">Köszönjük a regisztrációt!</h3>
@@ -117,7 +115,7 @@ export default function RegisterForm() {
                 </div>
                 <Button
                   onClick={() => router.push("/login")}
-                  className="w-full h-11 text-base transition-all active:scale-[0.98] font-semibold shadow-lg shadow-primary/20"
+                  className="w-full h-11 text-base font-semibold"
                   size="lg"
                 >
                   Vissza a bejelentkezéshez
@@ -181,7 +179,7 @@ export default function RegisterForm() {
 
                 <div className="space-y-4 pt-2">
                   <Button
-                    className="w-full h-11 text-base transition-all active:scale-[0.98] font-semibold shadow-lg shadow-primary/20"
+                    className="w-full h-11 text-base font-semibold"
                     disabled={loading}
                     type="submit"
                     size="lg"
@@ -213,18 +211,33 @@ export default function RegisterForm() {
 
         {/* Right Column - Visual */}
         <div className="hidden md:block">
-          <div className="relative flex flex-col justify-end p-8 text-white h-full w-full bg-black/20 min-h-[600px] rounded-l-3xl overflow-hidden">
-            <div className="absolute inset-0 z-0">
-              <Orb hoverIntensity={0.5} rotateOnHover={true} hue={120} forceHoverState={false} />
-            </div>
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="korvo-grid flex h-full min-h-[600px] flex-col justify-between border-l border-border p-8">
+            <KorvoLogo className="ml-auto" />
 
-            <div className="relative z-10 space-y-3 max-w-lg text-right ml-auto">
-              <h2 className="text-4xl font-bold leading-tight tracking-tight">Csatlakozz a csapathoz</h2>
-              <p className="text-lg text-white/90 leading-relaxed font-normal">
-                Regisztrálj és kövesd nyomon hírdetéseid még ma!
-              </p>
+            <div className="ml-auto max-w-md space-y-7 text-right">
+              <div className="space-y-3">
+                <p className="text-xs font-medium uppercase text-[#a78bfa]">Team access</p>
+                <h2 className="text-4xl font-semibold leading-tight text-foreground">Operational access, cleanly managed</h2>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Jóváhagyott felhasználók, szerepkörök és kampány workflow-k egy kontrollált felületen.
+                </p>
+              </div>
+
+              <div className="grid gap-3 text-left">
+                {[
+                  { label: "Invite flow", value: "Controlled", icon: ShieldCheck },
+                  { label: "Campaign view", value: "Unified", icon: Activity },
+                  { label: "Partner data", value: "Ready", icon: Network },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <item.icon className="h-4 w-4 text-[#a78bfa]" />
+                      <span className="text-sm text-muted-foreground">{item.label}</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{item.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -12,8 +12,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/components/language-provider"
 
 export const metadata: Metadata = {
-  title: "Hírdetéskezelő",
-  description: "Manage marketing campaings or else.",
+  title: "Korvo",
+  description: "Campaign operations dashboard.",
   icons: {
     icon: [
       { url: "/favicons/favicon.ico", sizes: "any" },
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#171717",
+  themeColor: "#09090B",
 }
 
 export default function RootLayout({

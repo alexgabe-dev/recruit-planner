@@ -68,18 +68,6 @@ export function PartnersList() {
     )
   }, [partnersWithStats, searchQuery])
 
-  // Group by office
-  const partnersByOffice = useMemo(() => {
-    const grouped: Record<string, typeof filteredPartners> = {}
-    filteredPartners.forEach((partner) => {
-      if (!grouped[partner.office]) {
-        grouped[partner.office] = []
-      }
-      grouped[partner.office].push(partner)
-    })
-    return grouped
-  }, [filteredPartners])
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -110,7 +98,7 @@ export function PartnersList() {
                 <Building2 className="h-5 w-5 text-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{partners.length}</p>
+                <p className="text-2xl font-semibold">{partners.length}</p>
                 <p className="text-sm text-muted-foreground">{t("partners.totalPartners", "Összes partner")}</p>
               </div>
             </div>
@@ -119,11 +107,11 @@ export function PartnersList() {
         <Card className="border-border bg-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-lg bg-[oklch(0.7_0.15_160/0.1)] p-2">
-                <Building2 className="h-5 w-5 text-[oklch(0.7_0.15_160)]" />
+              <div className="rounded-lg bg-[rgb(124_58_237/0.12)] p-2">
+                <Building2 className="h-5 w-5 text-[#c4b5fd]" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{[...new Set(partners.map((p) => p.office))].length}</p>
+                <p className="text-2xl font-semibold">{[...new Set(partners.map((p) => p.office))].length}</p>
                 <p className="text-sm text-muted-foreground">{t("partners.officesCount", "Irodák száma")}</p>
               </div>
             </div>
@@ -132,11 +120,11 @@ export function PartnersList() {
         <Card className="border-border bg-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="rounded-lg bg-[oklch(0.65_0.2_250/0.1)] p-2">
-                <Building2 className="h-5 w-5 text-[oklch(0.65_0.2_250)]" />
+              <div className="rounded-lg bg-[rgb(34_197_94/0.12)] p-2">
+                <Building2 className="h-5 w-5 text-[#86efac]" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{partnersWithStats.reduce((acc, p) => acc + p.activeAds, 0)}</p>
+                <p className="text-2xl font-semibold">{partnersWithStats.reduce((acc, p) => acc + p.activeAds, 0)}</p>
                 <p className="text-sm text-muted-foreground">{t("partners.activeAds", "Aktív hirdetés")}</p>
               </div>
             </div>
@@ -150,15 +138,15 @@ export function PartnersList() {
           <CardTitle className="text-lg">{t("partners.listTitle", "Partnerek listája")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg border border-border">
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-muted/50">{t("partners.partnerName", "Partner neve")}</TableHead>
-                  <TableHead className="bg-muted/50">{t("ads.office", "Iroda")}</TableHead>
-                  <TableHead className="bg-muted/50 text-center">{t("partners.adsCount", "Hirdetések")}</TableHead>
-                  <TableHead className="bg-muted/50 text-center">{t("partners.active", "Aktív")}</TableHead>
-                  <TableHead className="bg-muted/50 w-[50px]"></TableHead>
+                  <TableHead className="bg-background/80">{t("partners.partnerName", "Partner neve")}</TableHead>
+                  <TableHead className="bg-background/80">{t("ads.office", "Iroda")}</TableHead>
+                  <TableHead className="bg-background/80 text-center">{t("partners.adsCount", "Hirdetések")}</TableHead>
+                  <TableHead className="bg-background/80 text-center">{t("partners.active", "Aktív")}</TableHead>
+                  <TableHead className="bg-background/80 w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,7 +168,7 @@ export function PartnersList() {
                         <Badge
                           className={
                             partner.activeAds > 0
-                              ? "bg-[oklch(0.7_0.18_145/0.2)] text-[oklch(0.7_0.18_145)]"
+                              ? "border-[rgb(34_197_94/0.24)] bg-[rgb(34_197_94/0.12)] text-[#86efac]"
                               : "bg-muted text-muted-foreground"
                           }
                         >

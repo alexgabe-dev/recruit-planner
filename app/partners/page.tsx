@@ -9,9 +9,10 @@ export default function PartnersPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("page.partnersTitle", "Partnerek")}</h1>
-          <p className="text-muted-foreground">{t("page.partnersDesc", "Kezelje a toborzási partnereket és irodákat")}</p>
+        <div className="border-b border-border pb-6">
+          <p className="text-xs font-medium uppercase text-[#a78bfa]">Network</p>
+          <h1 className="korvo-page-title">{t("page.partnersTitle", "Partnerek")}</h1>
+          <p className="korvo-page-description">{t("page.partnersDesc", "Kezelje a toborzási partnereket és irodákat")}</p>
         </div>
         <PartnersList />
       </div>

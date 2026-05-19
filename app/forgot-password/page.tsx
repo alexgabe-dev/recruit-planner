@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import Orb from "@/components/Orb"
-import { Mail, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react"
+import { KorvoLogo } from "@/components/korvo-logo"
+import { Mail, ArrowLeft, Loader2, CheckCircle2, KeyRound, ShieldCheck } from "lucide-react"
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -40,31 +40,50 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative w-full flex justify-center min-h-screen items-center bg-background p-4">
-      <Card className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 overflow-hidden border-border bg-card/80 backdrop-blur shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+    <div className="korvo-grid relative flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <Card className="relative z-10 grid w-full max-w-6xl grid-cols-1 overflow-hidden border-border bg-card shadow-[0_24px_80px_rgb(0_0_0/0.42)] animate-in fade-in slide-in-from-bottom-8 duration-700 md:grid-cols-2">
         
         {/* Left Column - Visual */}
         <div className="hidden md:block">
-          <div className="relative flex flex-col justify-end p-8 text-white h-full w-full bg-black/20 min-h-[600px] rounded-r-3xl overflow-hidden">
-            <div className="absolute inset-0 z-0">
-               <Orb hoverIntensity={0.5} rotateOnHover={true} hue={280} forceHoverState={false} />
-            </div>
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            
-            <div className="relative z-10 space-y-3 max-w-lg animate-in slide-in-from-left-8 fade-in duration-1000 delay-200 fill-mode-forwards">
-               <h2 className="text-4xl font-bold leading-tight tracking-tight">Elfelejtett jelszó?</h2>
-               <p className="text-lg text-white/90 leading-relaxed font-normal">
-                 Semmi gond, segítünk visszaállítani a hozzáférésedet.
-               </p>
+          <div className="korvo-grid flex h-full min-h-[600px] flex-col justify-between border-r border-border p-8">
+            <KorvoLogo />
+
+            <div className="space-y-7">
+              <div className="space-y-3">
+                <p className="text-xs font-medium uppercase text-[#a78bfa]">Recovery</p>
+                <h2 className="text-4xl font-semibold leading-tight text-foreground">Account recovery without noise</h2>
+                <p className="max-w-md text-sm leading-6 text-muted-foreground">
+                  A hozzáférés visszaállítása kontrollált, egyértelmű folyamatban történik.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <KeyRound className="h-4 w-4 text-[#a78bfa]" />
+                    <span className="text-sm text-muted-foreground">Reset flow</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Protected</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-4 w-4 text-[#a78bfa]" />
+                    <span className="text-sm text-muted-foreground">Session integrity</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Checked</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Right Column - Form */}
-        <div className="flex flex-col justify-center p-8 md:p-12 bg-card/50">
+        <div className="flex flex-col justify-center bg-card p-8 md:p-12">
+          <KorvoLogo className="mx-auto mb-8 md:hidden" />
           <CardHeader className="space-y-1 text-center pb-2 px-0 animate-in slide-in-from-right-4 fade-in duration-700 delay-100 fill-mode-forwards">
-            <CardTitle className="text-3xl font-bold tracking-tight">Helyreállítás</CardTitle>
+            <div className="mx-auto mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED] text-sm font-semibold text-[#FAFAFA]">
+              K
+            </div>
+            <CardTitle className="text-3xl font-semibold tracking-normal">Helyreállítás</CardTitle>
             <CardDescription className="text-base">
               {sent ? "Email elküldve" : "Add meg a fiókodhoz tartozó email címet vagy felhasználónevet"}
             </CardDescription>
@@ -72,8 +91,8 @@ export default function ForgotPasswordPage() {
           <CardContent className="pt-6 px-0 animate-in slide-in-from-right-4 fade-in duration-700 delay-200 fill-mode-forwards">
             {sent ? (
               <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in zoom-in-95 duration-500">
-                <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/20">
-                  <CheckCircle2 className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                <div className="rounded-full border border-primary/30 bg-[rgb(124_58_237/0.12)] p-3">
+                  <CheckCircle2 className="h-12 w-12 text-[#c4b5fd]" />
                 </div>
                 <div className="space-y-2 text-center max-w-xs mx-auto">
                   <h3 className="text-lg font-semibold">Ellenőrizd az email fiókod!</h3>
@@ -83,7 +102,7 @@ export default function ForgotPasswordPage() {
                 </div>
                 <Button 
                   onClick={() => router.push("/login")} 
-                  className="w-full h-11 text-base transition-all active:scale-[0.98] font-semibold shadow-lg shadow-primary/20"
+                  className="w-full h-11 text-base font-semibold"
                   size="lg"
                   variant="outline"
                 >
@@ -117,7 +136,7 @@ export default function ForgotPasswordPage() {
 
                 <div className="space-y-4 pt-2">
                   <Button 
-                    className="w-full h-11 text-base transition-all active:scale-[0.98] font-semibold shadow-lg shadow-primary/20" 
+                    className="w-full h-11 text-base font-semibold"
                     disabled={loading} 
                     type="submit"
                     size="lg"

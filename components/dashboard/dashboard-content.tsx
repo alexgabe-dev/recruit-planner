@@ -7,36 +7,38 @@ import { NotificationsList } from "./notifications-list"
 import { RecentAds } from "./recent-ads"
 import { useEffect, useState } from "react"
 import type { DashboardStats } from "@/lib/types"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useLanguage } from "@/components/language-provider"
 
 export function DashboardContent() {
   const { t } = useLanguage()
-  const { ads, partners, getDashboardStats, isLoading, error } = useStore()
+  const { getDashboardStats, isLoading, error } = useStore()
   const [stats, setStats] = useState<DashboardStats>({
     activeAds: 0,
     scheduledToday: 0,
     endingSoon: 0,
     totalPartners: 0,
   })
-  const [role, setRole] = useState<string | null>(null)
-  const [users, setUsers] = useState<Array<{ id: number; username: string }>>([])
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
   const isLoadingData = useLoadData()
+
+  const pageHeader = (
+    <div className="flex flex-col gap-3 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p className="text-xs font-medium uppercase text-[#a78bfa]">Command center</p>
+        <h1 className="korvo-page-title">{t("page.dashboardTitle", "Command Center")}</h1>
+        <p className="korvo-page-description">{t("page.dashboardDesc", "Recruitment kampányok, partnerek és határidők egy kontrollált munkatérben")}</p>
+      </div>
+      <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground">
+        <span className="size-1.5 rounded-full bg-success" />
+        Live workflow
+      </div>
+    </div>
+  )
 
   useEffect(() => {
     ;(async () => {
       try {
-        // Cache busting for role check
-        const meRes = await fetch(`/api/auth/me?t=${Date.now()}`, { cache: 'no-store' })
-        if (meRes.ok) {
-          const me = await meRes.json()
-          setRole(me.role || 'user')
-        }
-        
         if (!isLoading && !error) {
-          // Always fetch global stats/default stats
           getDashboardStats().then(setStats).catch(console.error)
         }
       } catch {}
@@ -46,10 +48,7 @@ export function DashboardContent() {
   if (isLoadingData || isLoading) {
   return (
       <div className="space-y-6">
-        <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("page.dashboardTitle", "Dashboard")}</h1>
-        <p className="text-muted-foreground">{t("page.dashboardDesc", "Üdvözöljük a toborzási hirdetéskezelő rendszerben")}</p>
-      </div>
+        {pageHeader}
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
@@ -76,10 +75,7 @@ export function DashboardContent() {
    if (error) {
      return (
        <div className="space-y-6">
-       <div>
-           <h1 className="text-2xl font-bold text-foreground">{t("page.dashboardTitle", "Dashboard")}</h1>
-           <p className="text-muted-foreground">{t("page.dashboardDesc", "Üdvözöljük a toborzási hirdetéskezelő rendszerben")}</p>
-         </div>
+        {pageHeader}
          
          <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
            <p className="text-sm text-destructive">Hiba történt az adatok betöltése során: {error}</p>
@@ -90,10 +86,7 @@ export function DashboardContent() {
  
    return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("page.dashboardTitle", "Dashboard")}</h1>
-        <p className="text-muted-foreground">{t("page.dashboardDesc", "Üdvözöljük a toborzási hirdetéskezelő rendszerben")}</p>
-      </div>
+      {pageHeader}
 
       <StatsCards stats={stats} />
 

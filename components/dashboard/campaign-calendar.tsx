@@ -92,6 +92,31 @@ export function CampaignCalendar() {
 
   const dayNames = ["V", "H", "K", "Sze", "Cs", "P", "Szo"]
 
+  const getTypeTone = (type: Ad["type"]) => {
+    if (type === "kampány") {
+      return {
+        dot: "bg-[#a78bfa]",
+        badge: "border-[rgb(124_58_237/0.24)] bg-[rgb(124_58_237/0.12)] text-[#c4b5fd]",
+      }
+    }
+    if (type === "post") {
+      return {
+        dot: "bg-[#38bdf8]",
+        badge: "border-[rgb(56_189_248/0.24)] bg-[rgb(56_189_248/0.1)] text-[#7dd3fc]",
+      }
+    }
+    if (type === "Profession") {
+      return {
+        dot: "bg-[#22c55e]",
+        badge: "border-[rgb(34_197_94/0.24)] bg-[rgb(34_197_94/0.1)] text-[#86efac]",
+      }
+    }
+    return {
+      dot: "bg-[#f59e0b]",
+      badge: "border-[rgb(245_158_11/0.24)] bg-[rgb(245_158_11/0.1)] text-[#fbbf24]",
+    }
+  }
+
   const today = new Date()
   const isToday = (day: number) =>
     day === today.getDate() &&
@@ -155,11 +180,11 @@ export function CampaignCalendar() {
               <div
                 key={i}
                 onClick={() => day && handleDayClick(day)}
-                className={`min-h-[80px] sm:min-h-[100px] cursor-pointer rounded-lg border p-1 transition-all hover:shadow-md ${
+                className={`min-h-[80px] sm:min-h-[100px] cursor-pointer rounded-lg border p-1 transition-[background-color,border-color] ${
                   day
                     ? isToday(day)
-                      ? "border-primary/50 bg-primary/5 shadow-sm"
-                      : "border-border bg-card hover:bg-muted/50"
+                      ? "border-primary/50 bg-[rgb(124_58_237/0.1)]"
+                      : "border-border bg-background hover:bg-accent/50"
                     : "border-transparent"
                 }`}
               >
@@ -179,33 +204,24 @@ export function CampaignCalendar() {
                       {dayAds.map((ad) => (
                         <div
                           key={ad.id}
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            ad.type === "kampány"
-                              ? "bg-[oklch(0.7_0.15_160)]"
-                              : ad.type === "post"
-                                ? "bg-[oklch(0.65_0.18_250)]"
-                                : "bg-[oklch(0.75_0.15_45)]"
-                          }`}
+                          className={`h-1.5 w-1.5 rounded-full ${getTypeTone(ad.type).dot}`}
                         />
                       ))}
                     </div>
                     {/* Desktop View: Text badges */}
                     <div className="hidden space-y-1 sm:block">
-                      {dayAds.slice(0, 3).map((ad) => (
-                        <div
-                          key={ad.id}
-                          className={`truncate rounded px-1.5 py-0.5 text-[10px] font-medium shadow-sm ${
-                            ad.type === "kampány"
-                              ? "bg-[oklch(0.7_0.15_160/0.2)] text-[oklch(0.7_0.15_160)]"
-                              : ad.type === "post"
-                                ? "bg-[oklch(0.65_0.18_250/0.2)] text-[oklch(0.65_0.18_250)]"
-                                : "bg-[oklch(0.75_0.15_45/0.2)] text-[oklch(0.75_0.15_45)]"
-                          }`}
-                          title={ad.positionName}
-                        >
-                          {ad.positionName}
-                        </div>
-                      ))}
+                      {dayAds.slice(0, 3).map((ad) => {
+                        const tone = getTypeTone(ad.type)
+                        return (
+                          <div
+                            key={ad.id}
+                            className={`truncate rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${tone.badge}`}
+                            title={ad.positionName}
+                          >
+                            {ad.positionName}
+                          </div>
+                        )
+                      })}
                       {dayAds.length > 3 && (
                         <div className="pl-1 text-[10px] font-medium text-muted-foreground">
                           +{dayAds.length - 3} további
@@ -222,15 +238,15 @@ export function CampaignCalendar() {
         {/* Legend */}
         <div className="mt-4 flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded bg-[oklch(0.7_0.15_160)]" />
+            <div className="h-3 w-3 rounded bg-[#a78bfa]" />
             <span className="text-xs text-muted-foreground">Kampány</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded bg-[oklch(0.65_0.18_250)]" />
+            <div className="h-3 w-3 rounded bg-[#38bdf8]" />
             <span className="text-xs text-muted-foreground">Post</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded bg-[oklch(0.75_0.15_45)]" />
+            <div className="h-3 w-3 rounded bg-[#f59e0b]" />
             <span className="text-xs text-muted-foreground">Kiemelt post</span>
           </div>
         </div>
@@ -257,16 +273,10 @@ export function CampaignCalendar() {
                 ) : (
                     <div className="space-y-3 pt-2">
                         {selectedDayAds.map(ad => (
-                            <div key={ad.id} className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                            <div key={ad.id} className="rounded-lg border border-border bg-background p-3">
                                 <div className="mb-2 flex items-start justify-between gap-2">
                                     <h4 className="font-semibold text-foreground">{ad.positionName}</h4>
-                                    <Badge variant="outline" className={
-                                        ad.type === "kampány"
-                                        ? "border-[oklch(0.7_0.15_160)] text-[oklch(0.7_0.15_160)]"
-                                        : ad.type === "post"
-                                            ? "border-[oklch(0.65_0.18_250)] text-[oklch(0.65_0.18_250)]"
-                                            : "border-[oklch(0.75_0.15_45)] text-[oklch(0.75_0.15_45)]"
-                                    }>
+                                    <Badge variant="outline" className={getTypeTone(ad.type).badge}>
                                         {ad.type}
                                     </Badge>
                                 </div>

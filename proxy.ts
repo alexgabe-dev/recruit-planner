@@ -14,7 +14,11 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/reset") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/static")
+    pathname.startsWith("/static") ||
+    pathname.startsWith("/logo") ||
+    pathname.startsWith("/uploads") ||
+    pathname.startsWith("/favicons") ||
+    /\.[^/]+$/.test(pathname)
   ) {
     return NextResponse.next()
   }
@@ -40,6 +44,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next|static|favicon.ico).*)",
+    "/((?!api|_next|static|logo|uploads|favicons|favicon.ico|.*\\..*).*)",
   ],
 }

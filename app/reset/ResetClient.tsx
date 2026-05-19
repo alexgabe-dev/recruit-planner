@@ -48,9 +48,9 @@ export default function ResetClient() {
   }
 
   return (
-    <Card className="relative z-10 w-full max-w-2xl border-border bg-card/80 backdrop-blur shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <Card className="relative z-10 w-full max-w-2xl border-border bg-card shadow-[0_24px_80px_rgb(0_0_0/0.42)] animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader className="space-y-1 text-center pb-0">
-        <CardTitle className="text-2xl font-bold tracking-tight">Jelszó visszaállítása</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-normal">Jelszó visszaállítása</CardTitle>
         <CardDescription>
           {success ? "Jelszó sikeresen frissítve" : "Add meg az új jelszavadat"}
         </CardDescription>
@@ -58,8 +58,8 @@ export default function ResetClient() {
       <CardContent className="pt-6">
         {success ? (
           <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in zoom-in-95 duration-500">
-            <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
-              <CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-400" />
+            <div className="rounded-full border border-success/30 bg-[rgb(34_197_94/0.12)] p-3">
+              <CheckCircle2 className="h-12 w-12 text-[#86efac]" />
             </div>
             <div className="space-y-2 text-center max-w-xs mx-auto">
               <h3 className="text-lg font-semibold">Sikeres visszaállítás!</h3>
